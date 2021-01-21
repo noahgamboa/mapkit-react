@@ -1,0 +1,13 @@
+.SearchBarWrapper {
+    position: absolute; 
+    top: 10px;
+    left: 10px;
+    z-index: 99;
+}
+
+.SearchBar {
+    width: 20rem;
+    background: #F2F1F9;
+    border: none;
+    padding: 0.5rem;
+}
