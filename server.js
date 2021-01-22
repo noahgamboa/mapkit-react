@@ -28,7 +28,6 @@ app.get('/token', (req, res, next) => {
     res.header('Cache-Control', 'no-cache, no-store, must-revalidate');
     next();
 }, (req, res) => {
-    console.log("Requestion token");
     const payload = {
         iss: APPLE_TEAM_ID, /* Issuer: Your Apple Developer Team ID */
         iat: Date.now() / 1000, /* Issued at: Current time in seconds */
@@ -37,18 +36,7 @@ app.get('/token', (req, res, next) => {
     res.send(jwt.sign(payload, AUTH_KEY, {header: header}));
 });
 
-app.get('/api/hello', (req, res) => {
-    res.send({ express: 'Hello From Express' });
-});
-
-app.post('/api/world', (req, res) => {
-    console.log(req.body);
-    res.send(
-        `I received your POST request. This is what you sent me: ${req.body.post}`,
-    );
-});
-
-app.listen(PORT, '0.0.0.0', (err) => {  
+app.listen(PORT, '127.0.0.1', (err) => {  
     if (err) {
         console.log(err);
         process.exit(1);
