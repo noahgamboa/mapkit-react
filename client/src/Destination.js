@@ -1,15 +1,23 @@
 import React, { Component } from 'react'
 import './Destination.css';
 
-const DestinationGroupSelector = ({group, groups}) => {
-    const groupChoices = groups.map((g) => {
-        return (<option key={g.name} value={g.name} selected={!!(g === group)}>{g.name}</option>)
+const DestinationGroupSelector = ({groups, destination, updateGroup}) => {
+    var groupChoices = Object.values(groups).map((g) => {
+        return (<option key={g.name} value={g.id}>{g.name}</option>)
     })
+    groupChoices.splice(0,0, (<option key="none" value="none">No Group</option>))
 
+    const updateCallback = (e) => {
+        const groupId = e.target.value
+        const newGroup = groupId === "none" ? null : groups[groupId]
+        updateGroup(destination, newGroup)
+    }
+
+    const groupId = destination.groupId === null ? "none" : destination.groupId
     return (
         <div>
             <span>Group:</span>
-            <select>
+            <select onChange={updateCallback} value={groupId}>
                 {groupChoices}
             </select>
         </div>
@@ -26,8 +34,8 @@ class Destination extends Component {
     }
 
     render() {
-        const {destination, updateCallback, group, groups} = this.props
-        const updateDestination = (update) => {
+        const {destination, updateDestination, groups, updateGroup} = this.props
+        const localUpdateDestination = (update) => {
             var newDestination = Object.assign({}, destination)
             Object.keys(update).forEach((key) => {
                 if (key === "transitTime") {
@@ -38,7 +46,7 @@ class Destination extends Component {
                     console.error("Unknown key '" + key + "' for update to destination");
                 }
             });
-            updateCallback(newDestination)
+            updateDestination(newDestination)
         }
 
         const transportModes = Object.keys(destination.transportModes).map((mode) => {
@@ -46,7 +54,7 @@ class Destination extends Component {
             const onChange = () => {
                 var obj = {};
                 obj[mode] = !selected
-                updateDestination(obj)
+                localUpdateDestination(obj)
             }
             return (<span key={mode} className="DestinationModeSpan">
                 <input type="checkbox" checked={!!selected} onChange={onChange}/>
@@ -60,12 +68,12 @@ class Destination extends Component {
                 <button onClick={this.toggleModal}>{ destination.name }</button>
                 { this.state.modalExposed === true ? 
                         (<div className="DestinationModal"> 
-                            <DestinationGroupSelector group={group} groups={groups} />
+                            <DestinationGroupSelector groups={groups} destination={destination} updateGroup={updateGroup}/>
                             <div className="DestinationTime"> 
                             <input type="number" min="0" max="100" onChange={(e) => {
                                 var obj = {};
                                 obj.transitTime = Number(e.target.value)
-                                updateDestination(obj)
+                                localUpdateDestination(obj)
                             }} value={destination.transitTime}/>
                                 <span>min</span>
                             </div>
@@ -87,15 +95,14 @@ class DestinationGroup extends Component {
     }
 
     render() {
-        const {key, name, numChildren, children} = this.props
-        if (numChildren === 1) {
-            return (children)
-        }
+        const { name, groupId, updateGroupName, children } = this.props
         return (
-            <div key={key}>
-                <span>{name}</span>
+            <div key={groupId}>
+                <input type="text" value={name} onChange={ (e) => { updateGroupName(e.target.value, groupId) } } />
                 <button onClick={this.toggleModal}>{ this.state.showChildren ? "➖" : "➕" }</button>
-                { this.state.showChildren ? children : (null) }
+                <div className="DestinationGroup">
+                    { this.state.showChildren ? children : (null) }
+                </div>
             </div>
         )
     }
@@ -108,19 +115,38 @@ class DestinationView extends Component {
         if (Object.keys(destinations).length === 0) {
             return (null);
         }
-        const destinationGroupList = groups.map((group) => {
+        const destinationGroupList = Object.values(groups).map((group) => {
             const destinationIds = group.destinationIds
-            const destinationList = destinationIds.map((destinationId) => {
+            const destinationList = Object.keys(destinationIds).map((destinationId) => {
                 const destination = destinations[destinationId]
-                return (<Destination key={destination.id} destination={destination} updateCallback={this.props.updateDestination} group={group} groups={groups}/>)
+                return (<Destination 
+                    key={destination.id} 
+                    destination={destination}
+                    updateDestination={this.props.updateDestination}
+                    updateGroup={this.props.updateGroup}
+                    groups={groups}/>)
             })
-            return (<DestinationGroup key={group.name} name={group.name} numChildren={destinationList.length}>{destinationList}</DestinationGroup>)
+            return (<DestinationGroup key={group.id} name={group.name} updateGroupName={this.props.updateGroupName} groupId={group.id}>
+                        {destinationList}
+                    </DestinationGroup>)
+        })
+        const soloDestinations = Object.values(destinations)
+            .filter((d) => d.groupId === null)
+            .map((destination) => {
+                return (<Destination 
+                    key={destination.id} 
+                    destination={destination}
+                    updateDestination={this.props.updateDestination}
+                    updateGroup={this.props.updateGroup}
+                    groups={groups}/>)
         })
 		return (
             <div className="DestinationViewWrapper">
                 <h2>Destination List</h2>
+                <button onClick={this.props.createGroup}>Create Group</button>
                 <ul className="DestinationList">
                     { destinationGroupList }
+                    { soloDestinations }
                 </ul>
             </div>
         );

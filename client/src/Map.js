@@ -3,6 +3,7 @@ import React, { Component } from 'react'
 import landmarkAnnotationCallout from './MapCallout'
 
 class AppleMap extends Component {
+    mapkit = window.mapkit
 
     isMapInitialized() {
         if (!this.props.token) {
@@ -24,7 +25,6 @@ class AppleMap extends Component {
         console.log("Initializing mapkit with token: " + token)
 		this.canvas = document.createElement('canvas')
 		this.canvas.id = 'currentLocationOverride'
-        this.mapkit = window.mapkit
 
 		this.mapkit.init({
             authorizationCallback: function(done) {
@@ -70,7 +70,7 @@ class AppleMap extends Component {
 	}
 
 	componentDidUpdate(prevProps) {
-		const { token, annotations, boundingRegion } = this.props
+		const { token, places, boundingRegion, isochrones } = this.props
         if (!this.isMapInitialized() && token !== prevProps.token) {
             this.initializeMap(token)
             if (!this.isMapInitialized()) {
@@ -78,11 +78,17 @@ class AppleMap extends Component {
                 return;
             }
         } 
-        if (annotations !== prevProps.annotations) {
-            this.updateAnnotations(annotations)
+        if (!this.isMapInitialized()) {
+            return
+        }
+        if (places !== prevProps.places) {
+            this.updateAnnotationsFromPlaces(places)
         }
         if (boundingRegion !== prevProps.boundingRegion) {
             this.updateMapRegion(boundingRegion)
+        }
+        if (isochrones !== prevProps.isochrones) {
+            this.updateIsochrones(isochrones)
         }
 	}
 
@@ -96,27 +102,49 @@ class AppleMap extends Component {
         this.map.removeAnnotations(this.map.annotations) // clear annotations
     }
 
-    updateAnnotations(annotations) {
-        if (!annotations) {
-            this.clearAnnotations()
+    updateAnnotationsFromPlaces(places) {
+        this.clearAnnotations()
+        if (!places) {
             return
         }
-
-        annotations = annotations.map((annotation) => {
+        const annotations = places.map((place) => {
+            const coordinate = new this.mapkit.Coordinate(place.coordinate.latitude, place.coordinate.longitude)
+            var annotation = new this.mapkit.MarkerAnnotation(coordinate);
+            annotation.title = place.name;
+            annotation.subtitle = place.formattedAddress;
+            annotation.color = "#FF00FF";
+            annotation.data.place = place;
             annotation.data.callback = (update) => {
-                console.log(annotation.title) 
-                this.props.addDestination(annotation, update)
+                this.props.addDestination(place, update)
             }
             annotation.callout = landmarkAnnotationCallout
             return annotation
-        });
+        })
         this.map.showItems(annotations)
     }
 
-	updateMapRegion(boundingRegion) {
+    convertToMapkit(boundingRegionObj) {
+        if (boundingRegionObj instanceof this.mapkit.CoordinateRegion) {
+            return boundingRegionObj
+        }
+        if (boundingRegionObj instanceof Object &&
+            boundingRegionObj.center instanceof Object &&
+            boundingRegionObj.span instanceof Object && 
+            typeof(boundingRegionObj.center.latitude) === "number" &&
+            typeof(boundingRegionObj.center.longitude) === "number" &&
+            typeof(boundingRegionObj.span.latitudeDelta) === "number" &&
+            typeof(boundingRegionObj.span.longitudeDelta) === "number") {
+            const coordinate = new this.mapkit.Coordinate(boundingRegionObj.center.latitude, boundingRegionObj.center.longitude)
+            const span = new this.mapkit.CoordinateSpan(boundingRegionObj.span.latitudeDelta, boundingRegionObj.span.longitudeDelta)
+            return new this.mapkit.CoordinateRegion(coordinate, span)
+        }
+    }
+
+	updateMapRegion(boundingRegionObj) {
         if (!(this.map instanceof this.mapkit.Map)) {
             return
         }
+        const boundingRegion = this.convertToMapkit(boundingRegionObj)
         if (!(boundingRegion instanceof this.mapkit.CoordinateRegion)) {
             return
         }
@@ -126,6 +154,33 @@ class AppleMap extends Component {
         console.log("Updating map region from Map.updateMapRegion: " + boundingRegion)
         this.map.region = boundingRegion
 	}
+
+    updateIsochrones(isochrones) {
+        if (!(this.map instanceof this.mapkit.Map)) {
+            return
+        }
+        const that = this
+        isochrones.map( points => {
+            const newPoints = points.reduce((point) => {
+                const lon = point[0]
+                const lat = point[1]
+                return (typeof lon === 'number' && typeof lat === 'number')
+            }).map(function(point) {
+                const lon = point[0]
+                const lat = point[1]
+                return new that.mapkit.Coordinate(lat, lon);
+            });
+            var style = new that.mapkit.Style({
+                strokeColor: "#F00",
+                strokeOpacity: .2,
+                lineWidth: 2,
+                lineJoin: "round",
+                lineDash: [2, 2, 6, 2, 6, 2]
+            });
+            var rectangle = new that.mapkit.PolygonOverlay(newPoints, { style: style });
+            that.map.addOverlay(rectangle);
+        })
+    }
 
 	render() {
 		const { width, height } = this.props

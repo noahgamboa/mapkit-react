@@ -20,6 +20,14 @@
     margin-left: 0.5rem;
 }
 
+.RunButton {
+    border-radius: 4px;
+    background: #F2F1F9;
+    border: none;
+    padding: 0.65rem;
+    margin-left: 0.5rem;
+}
+
 input:disabled {
     color: #F2F1F9;
     background: #FFFFFF;

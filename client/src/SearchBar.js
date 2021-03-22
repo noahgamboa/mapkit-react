@@ -32,11 +32,24 @@ const SetSearchRegionButton = ({setSearchRegion, disabled}) => {
   );
 }
 
+const RunButton = ({generateIsochrones}) => {
+    return (
+        <input 
+            className="RunButton"
+            key="random1"
+            value="Generate"
+            onClick={(e) => generateIsochrones()}
+            aria-label="Generate Isochrones for the place you are interested in"
+            type="button"
+        />
+  );
+}
+
 class SearchBar extends Component {
     state = {
         keyword: "",
         boundingRegion: null,
-        setSearchRegionDisabled: false,
+        searchRegionDisabled: false,
     };
 
     componentDidMount() {
@@ -46,21 +59,23 @@ class SearchBar extends Component {
     componentDidUpdate(prevProps) {
         const { boundingRegion } = this.props
         if (!(boundingRegion instanceof this.mapkit.CoordinateRegion)) {
+            // if boundingRegion is not a coordinate, don't update
             return 
         }
-        if (!(this.state.boundingRegion instanceof this.mapkit.CoordinateRegion)) {
+        if (this.state.boundingRegion === null) {
+            // if we just initialized this, don't set the bounding region
             return
         }
 
-        if (this.state.boundingRegion.equals(boundingRegion) && this.state.setSearchRegionDisabled === false) {
+        if (this.state.boundingRegion.equals(boundingRegion) && this.state.searchRegionDisabled === false) {
             // disable setting the search region when our map is set to the current search region
-            this.setState({setSearchRegionDisabled: true})
+            this.setState({searchRegionDisabled: true})
             return 
         } 
 
-        if (!this.state.boundingRegion.equals(boundingRegion) && this.state.setSearchRegionDisabled === true) {
+        if (!this.state.boundingRegion.equals(boundingRegion) && this.state.searchRegionDisabled === true) {
             // enable setting the search region when our map is set to a different search region
-            this.setState({setSearchRegionDisabled: false})
+            this.setState({searchRegionDisabled: false})
         }
 
     }
@@ -75,11 +90,18 @@ class SearchBar extends Component {
     }
 
     performQuery = () => {
-        if (this.state.boundingRegion === null) {
+        var boundingRegion = this.state.boundingRegion
+        if (boundingRegion === null && this.props.boundingRegion instanceof this.mapkit.CoordinateRegion) {
+            this.setState({ boundingRegion: this.props.boundingRegion })
+            boundingRegion = this.props.boundingRegion
+        }
+
+        if (!(boundingRegion instanceof this.mapkit.CoordinateRegion)) {
             alert("You must set the bounding region of search before searching")
             return
         }
-        var search = new this.mapkit.Search({ region: this.state.boundingRegion});
+
+        var search = new this.mapkit.Search({ region: boundingRegion });
 
         search.search(this.state.keyword, (error, data) => {
             if (error) {
@@ -90,22 +112,22 @@ class SearchBar extends Component {
             if (data.places.length === 0) {
                 alert("No places found for search term '" + this.state.keyword + "'")
             }
-            var annotations = data.places.filter((place) => {
-                const boundingRegion = this.state.boundingRegion.toBoundingRegion()
+            var places = data.places.filter((place) => {
+                const localBoundingRegion = boundingRegion.toBoundingRegion()
                 const lat = place.coordinate.latitude
                 const lon = place.coordinate.longitude
-                return lat < boundingRegion.northLatitude && lat > boundingRegion.southLatitude 
-                    && lon > boundingRegion.westLongitude && lon < boundingRegion.eastLongitude
+                return lat < localBoundingRegion.northLatitude && lat > localBoundingRegion.southLatitude 
+                    && lon > localBoundingRegion.westLongitude && lon < localBoundingRegion.eastLongitude
             }).map((place) => {
-                var annotation = new this.mapkit.MarkerAnnotation(place.coordinate);
-                annotation.title = place.name;
-                annotation.subtitle = place.formattedAddress;
-                annotation.color = "#FF00FF";
-                annotation.data.place = place;
-                return annotation;
+                return {
+                    name: place.name,
+                    coordinate: place.coordinate,
+                    pointOfInterestCategory: place.pointOfInterestCategory,
+                    formattedAddress: place.formattedAddress
+                }
             });
 
-            this.props.setAnnotationCallback(annotations)
+            this.props.setPlacesCallback(places)
         });
 
     }
@@ -120,8 +142,9 @@ class SearchBar extends Component {
                 />
                 <SetSearchRegionButton 
                     setSearchRegion={this.setBoundingRegion}
-                    disabled={this.state.setSearchRegionDisabled}
+                    disabled={this.state.searchRegionDisabled}
                 />
+                <RunButton generateIsochrones={this.props.generateIsochrones}/>
             </div>
 		)
 	}
