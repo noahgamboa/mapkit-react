@@ -14,7 +14,7 @@ const destinations =  {
     coordinate: { latitude: 37.761822081351966, longitude: -122.41182446479797 },
     id: '4258036681961592',
     groupId: null,
-    transportModes: { walk: true, bike: false, transit: false, drive: false },
+    transportModes: { walk: true, bike: true, transit: false, drive: false },
     transitTime: 30
   }
 }
@@ -22,7 +22,7 @@ const groups = {
   'kmd0vg6v-f529qbmxr': {
     id: 'kmd0vg6v-f529qbmxr',
     name: 'Test',
-    destinationIds: { '132083463926734': true }
+      destinationIds: { '132083463926734': true,  '4258036681961592': true }
   }
 }
 

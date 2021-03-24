@@ -1,9 +1,12 @@
+extern crate geo_types;
+
 use neon::prelude::*;
 use neon::register_module;
 use std::collections::HashMap;
 use js_helpers::Destination;
 use js_helpers::Group;
 use ors_helpers::Isochrone;
+use geojson::{Feature, GeoJson, Geometry, Value};
 
 pub mod js_helpers;
 pub mod ors_helpers;
@@ -35,7 +38,7 @@ impl Task for BackgroundTask {
     fn perform(&self) -> Result<Self::Output, Self::Error> {
         // let destination_isochrones = HashMap<String, Isochrone>::new();
         let transport_modes: &'static [&'static str] = &["foot-walking", "driving-car", "cycling-regular"];
-        let mut query_results = HashMap::new();
+        let mut query_results = Vec::new();
 
         println!("destinations: {:?}", self.destinations);
         println!("groups:       {:?}", self.groups);
@@ -58,10 +61,20 @@ impl Task for BackgroundTask {
         println!("query_results =  {:?}", query_results);
 
 
-        let polygons: Vec<Isochrone> = ors_helpers::get_isochrone_intersections(&self.groups, query_results)?;
+        let polygons = ors_helpers::get_isochrone_intersections(&self.groups, &query_results)?;
 
+        let geometry = Geometry::new(geojson::Value::from(&polygons));
+        let geojson = GeoJson::Feature(Feature {
+            bbox: None,
+            geometry: Some(geometry),
+            id: None,
+            properties: None,
+            foreign_members: None,
+        });
 
-        Ok("Done".to_string())
+        let geojson_string = geojson.to_string();
+
+        Ok(geojson_string)
     }
 
     fn complete(self, mut cx: TaskContext, result: Result<Self::Output, Self::Error>) -> JsResult<Self::JsEvent> {
