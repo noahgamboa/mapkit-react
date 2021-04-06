@@ -40,9 +40,9 @@ impl Task for BackgroundTask {
         let transport_modes: &'static [&'static str] = &["foot-walking", "driving-car", "cycling-regular"];
         let mut query_results = Vec::new();
 
-        println!("destinations: {:?}", self.destinations);
-        println!("groups:       {:?}", self.groups);
-        println!("token:        {:?}", self.token);
+        println!("[RUST] destinations: {:?}", self.destinations);
+        println!("[RUST] groups:       {:?}", self.groups);
+        println!("[RUST] token:        {:?}", self.token);
 
         // For each transport mode... 
         for transport_mode in transport_modes {
@@ -58,12 +58,14 @@ impl Task for BackgroundTask {
             let query_result = ors_helpers::query_ors(transport_mode.to_string(), &self.token, &dests_in_mode)?;
             query_results.extend(query_result);
         }
-        println!("query_results =  {:?}", query_results);
+        println!("[RUST] query_results =  {:?}", query_results);
 
 
         let polygons = ors_helpers::get_isochrone_intersections(&self.groups, &query_results)?;
+        println!("[RUST] here 1");
 
         let geometry = Geometry::new(geojson::Value::from(&polygons));
+        println!("[RUST] here 2");
         let geojson = GeoJson::Feature(Feature {
             bbox: None,
             geometry: Some(geometry),
@@ -71,13 +73,16 @@ impl Task for BackgroundTask {
             properties: None,
             foreign_members: None,
         });
+        println!("[RUST] here 3");
 
         let geojson_string = geojson.to_string();
 
+        println!("[RUST] Completing query");
         Ok(geojson_string)
     }
 
     fn complete(self, mut cx: TaskContext, result: Result<Self::Output, Self::Error>) -> JsResult<Self::JsEvent> {
+        println!("[RUST] in complete function");
         Ok(cx.string(result.unwrap()))
     }
 }

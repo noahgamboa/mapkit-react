@@ -99,7 +99,7 @@ pub async fn query_ors(transport_mode: String, token: &String, destinations: &Ve
         latlon.push(destination.lon);
         latlon.push(destination.lat);
         locations.push(latlon);
-        range.push(destination.time);
+        range.push(destination.time * 60f64);
     }
     let isochrone_request = IsochroneRequest {
         locations: locations,
@@ -256,30 +256,23 @@ fn get_isochrone_permutations<'a>(groups: &Vec<Group>,  isochrones: &'a Vec<Isoc
 pub fn get_isochrone_intersections(groups: &Vec<Group>,  isochrones: &Vec<Isochrone>) -> Result<MultiPolygon<f64>, ORSError> {
     let destination_isochrones = get_destination_isochrones(&isochrones);
     let all_isochrones = get_isochrone_permutations(groups, &destination_isochrones);
+    println!("[RUST] [get_isochrone_intersections] here 1.");
     println!("{:?}", all_isochrones);
 
 
-    let multi_poly: MultiPolygon<f64> = all_isochrones.iter().map(| isochrone_vec | {
-        let intersection = isochrone_vec.iter().fold(isochrone_vec[0].polygon.clone(), |acc, isochrone| { 
-            let multi_poly = acc.intersection(&isochrone.polygon);
-            if multi_poly.iter().count() != 1 {
-                panic!("Multi poly has too many polygons");
-            }
-            for poly in multi_poly {
-                return poly
-            }
-            panic!("Multi poly doesn't have any polygons");
-            // let poly: Polygon<f64> = match multi_poly.iter().nth(0) {
-            //     Some(poly) => *poly,
-            //     None => panic!("Multi poly doesn't have any polygons"),
-            // };
-            // return poly;
+    if (isochrones.len() < 1) {
+        return Err(ORSError::new("No isochrones!"));
+    }
+    let initial_multi_poly: MultiPolygon<f64> = MultiPolygon::from(isochrones[0].polygon.clone());
+    let multi_poly: MultiPolygon<f64> = all_isochrones.iter().fold(initial_multi_poly, |acc, isochrone_vec | {
+        let first_poly_multi = MultiPolygon::from(isochrone_vec[0].polygon.clone());
+        let intersection: MultiPolygon<f64> = isochrone_vec.iter().fold(first_poly_multi, |acc, isochrone| { 
+            acc.intersection(&isochrone.polygon)
         });
-        return intersection;
-    }).collect();
-
-    // let multi_poly = MultiPolygon::new(all_isochrones_intersection);
+        return acc.union(&intersection)
+    });
     println!("{:?}", multi_poly);
+    println!("[RUST] [get_isochrone_intersections] here 2.");
 
     return Ok(multi_poly);
 }

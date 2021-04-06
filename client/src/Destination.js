@@ -34,7 +34,7 @@ class Destination extends Component {
     }
 
     render() {
-        const {destination, updateDestination, groups, updateGroup} = this.props
+        const {destination, updateDestination, groups, updateGroup, deleteDestination} = this.props
         const localUpdateDestination = (update) => {
             var newDestination = Object.assign({}, destination)
             Object.keys(update).forEach((key) => {
@@ -68,6 +68,7 @@ class Destination extends Component {
                 <button onClick={this.toggleModal}>{ destination.name }</button>
                 { this.state.modalExposed === true ? 
                         (<div className="DestinationModal"> 
+                            <button onClick={() => { deleteDestination(destination) }}>Delete</button>
                             <DestinationGroupSelector groups={groups} destination={destination} updateGroup={updateGroup}/>
                             <div className="DestinationTime"> 
                             <input type="number" min="0" max="100" onChange={(e) => {
@@ -138,6 +139,7 @@ class DestinationView extends Component {
                     destination={destination}
                     updateDestination={this.props.updateDestination}
                     updateGroup={this.props.updateGroup}
+                    deleteDestination={this.props.deleteDestination}
                     groups={groups}/>)
         })
 		return (

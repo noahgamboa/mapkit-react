@@ -123,6 +123,15 @@ class Destinations {
         return newDestinations
     }
 
+    static removeDestination(destinations, destination) {
+        const destinationId = destination.id
+        if (!(destinationId in destinations)) {
+            throw new Error("Destinations.updateDestination ERROR: could not find destinationId '" + destinationId + "' in destinations")
+        }
+        const newDestinations = update(destinations, { $unset: [destinationId] })
+        return newDestinations
+    }
+
 }
 
 class Groups {
@@ -307,6 +316,11 @@ class App extends Component {
         }
     }
 
+    deleteDestination = (destination) => {
+        const newDestinations = Destinations.removeDestination(this.state.destinations, destination)
+        this.setState({destinations: newDestinations})
+    }
+
     generateIsochrones = () => {
         console.log("generating isochrones!")
         generateIsochrones(this.state.destinations, this.state.groups)
@@ -340,6 +354,7 @@ class App extends Component {
                     destinations={this.state.destinations}
                     groups={this.state.groups}
                     updateDestination={this.updateDestination}
+                    deleteDestination={this.deleteDestination}
                     updateGroup={this.updateDestinationGroup}
                     createGroup={this.createGroup}
                     updateGroupName={this.updateGroupName}

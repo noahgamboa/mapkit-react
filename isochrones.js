@@ -2,11 +2,6 @@ const dotenv = require('dotenv');
 const openrouteservice = require("openrouteservice-js");
 const generateIsochrones = require("./isochrones/lib/index.js")
 
-const args = {
-    test: "name",
-    value: [1,2,3,4]
-}
-console.log(generateIsochrones(args))
 
 const {
     ORS_TOKEN,
@@ -41,31 +36,18 @@ const getProfile = (transportModes) => {
 
 const getIsochrones = (destinations, groups) => {
     var isochrones = []
-    return Promise.all(Object.keys(destinations).map( (key) => {
-        const destination = destinations[key]
-        console.log(destination)
-        const profile = getProfile(destination.transportModes)
-        const request = {
-            locations: [[destination.coordinate.longitude, destination.coordinate.latitude]],
-            profile: profile,
-            range: [destination.transitTime * 60],
-            units: 'mi',
-            range_type: 'time',
-            smoothing: 0.9,
-            area_units: 'mi'
-        }
-        console.log(JSON.stringify(request))
-        return Isochrones.calculate(request)
-    })).then( (data) => {
-        const filteredData = data.map(result => {
-            return result.features.map( feature => {
-                return feature.geometry.coordinates
-            })
-        }).flat(1)
-        return filteredData
-    }).catch(error => {
-        console.log(error)
-        return error
+    return new Promise((resolve, reject) => {
+        var result = generateIsochrones(destinations, groups, ORS_TOKEN, (error, result) => {
+            console.log("[GENERATE ISOCHRONES] Callback")
+            console.log("Error Value = ", error)
+            console.log("Result Value = ", result)
+            if (error) {
+                reject(error)
+            } else {
+                console.log("Resolving...")
+                resolve(result)
+            }
+        })
     })
 }
 

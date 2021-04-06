@@ -25,7 +25,9 @@ export const generateIsochrones = async (destinations, groups) => {
             destinations: destinations,
             groups: groups
         }).then((result) => {
-            resolve(result)
+            const parsedResult = JSON.parse(result)
+            const isochrones = parsedResult.geometry.coordinates
+            resolve(isochrones)
         }).catch((error) => {
             reject(error)
         })
