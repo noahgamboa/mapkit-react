@@ -1,6 +1,7 @@
 extern crate geo_booleanop;
 extern crate geo_types;
 
+use futures::{stream, StreamExt}; // 0.3.5
 use itertools::Itertools;
 use std::collections::HashSet;
 use std::collections::HashMap;
@@ -13,6 +14,7 @@ use crate::js_helpers::Destination;
 use crate::js_helpers::Group;
 use geo_booleanop::boolean::BooleanOp;
 use geo_types::{MultiPolygon, Polygon, LineString, Coordinate};
+use neon::result::Throw;
 
 /*
  curl -X POST \
@@ -29,7 +31,7 @@ pub struct ORSError {
 }
 
 impl ORSError {
-    fn new(msg: &str) -> ORSError {
+    pub fn new(msg: &str) -> ORSError {
         ORSError{details: msg.to_string()}
     }
 }
@@ -55,6 +57,12 @@ impl From<reqwest::Error> for ORSError {
 impl From<ORSError> for String {
     fn from(err: ORSError) -> Self {
         return err.to_string();
+    }
+}
+
+impl From<Throw> for ORSError {
+    fn from(throw: Throw) -> Self {
+        ORSError::new(format!("JS Throw! {}", throw).as_str())
     }
 }
 
@@ -92,42 +100,62 @@ fn find_coordinates(coordinate: &Value) -> Result<Coordinate<f64>, ORSError> {
 
 #[tokio::main]
 pub async fn query_ors(transport_mode: String, token: &String, destinations: &Vec<&Destination>) -> Result<Vec<Isochrone>, ORSError> {
-    let mut locations = Vec::new();
-    let mut range = Vec::new();
-    for destination in destinations {
-        let mut latlon = Vec::new();
-        latlon.push(destination.lon);
-        latlon.push(destination.lat);
-        locations.push(latlon);
-        range.push(destination.time * 60f64);
-    }
-    let isochrone_request = IsochroneRequest {
-        locations: locations,
-        range: range
-    };
-    let url = "https://api.openrouteservice.org/v2/isochrones/".to_owned() + &transport_mode;
-    println!("Running request...");
-    let res: Value = reqwest::Client::new()
-        .post(url)
-        .header("Content-Type", "application/json; charset=utf-8")
-        .header("Accept", "application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8")
-        .header("Authorization", token)
-        .json(&isochrone_request)
-        .send()
-        .await?
-        .json()
-        .await?;
+    // TODO: can only query in groups of 5, so need to make a new query for each set of 5...
+    let mut features = vec![];
+    let requests: Vec<IsochroneRequest> = destinations.chunks(5).map(|destination_chunk| {
+        let mut locations = Vec::new();
+        let mut range = Vec::new();
+        for destination in destination_chunk {
+            let mut latlon = Vec::new();
+            latlon.push(destination.lon);
+            latlon.push(destination.lat);
+            locations.push(latlon);
+            range.push(destination.time.num_seconds() as f64);
+        }
+        return IsochroneRequest {
+            locations: locations,
+            range: range
+        };
+    }).collect();
 
-    let features = &res["features"];
-    let features = match features {
-        Array(vec) => vec,
-        _ => return Err(ORSError::new("Features is not an array")),
-    };
+    let num_requests = requests.len();
+    let features = stream::iter(requests).map(|isochrone_request| {
+        async move {
+            let url = "https://api.openrouteservice.org/v2/isochrones/".to_owned() + &transport_mode;
+            println!("Running request...");
+            let res: Value = reqwest::Client::new()
+                .post(url)
+                .header("Content-Type", "application/json; charset=utf-8")
+                .header("Accept", "application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8")
+                .header("Authorization", token)
+                .json(&isochrone_request)
+                .send()
+                .await?
+                .json()
+                .await?;
+            println!("\n\n{:?}\n\n", res);
+            let sub_features = &res["features"];
+            let sub_features = match sub_features {
+                Array(vec) => vec,
+                _ => return Err(ORSError::new("Features is not an array")),
+            };
+            return Ok(sub_features);
+        }
+    }).buffer_unordered(num_requests);
+
+    let features: Result<Vec<Array>, _> = features.map(|sub_features| async {
+        match sub_features {
+            Ok(val) => return Ok(val),
+            Err(e) => return Err(e)
+        };
+    }).await;
+
 
     let mut res = Vec::new();
 
     for (i, destination) in destinations.iter().enumerate() {
         let id = &destination.id;
+        let time = destination.time.num_seconds() as f64;
         let polygon = features.iter().find(|&feature| {
             let properties = &feature["properties"];
             let group_index = &properties["group_index"];
@@ -135,14 +163,14 @@ pub async fn query_ors(transport_mode: String, token: &String, destinations: &Ve
                 return false;
             }
             let value = &properties["value"];
-            if value != destination.time {
+            if value != time {
                 return false;
             }
             return true;
         });
         let polygon = match polygon {
             Some(polygon) => polygon,
-            _ => return Err(ORSError::new("could not find polygon")),
+            _ => return Err(ORSError::new(format!("could not find polygon for index {} with time {}", i, destination.time).as_str())),
         };
         let coordinates = match &polygon["geometry"]["coordinates"] {
             Array(coordinates) => coordinates,
@@ -263,7 +291,7 @@ pub fn get_isochrone_intersections(groups: &Vec<Group>,  isochrones: &Vec<Isochr
     if (isochrones.len() < 1) {
         return Err(ORSError::new("No isochrones!"));
     }
-    let initial_multi_poly: MultiPolygon<f64> = MultiPolygon::from(isochrones[0].polygon.clone());
+    let initial_multi_poly: MultiPolygon<f64> = MultiPolygon::from(vec![Polygon::new(LineString::from(vec![(0f64,0f64)]), vec![] )]);
     let multi_poly: MultiPolygon<f64> = all_isochrones.iter().fold(initial_multi_poly, |acc, isochrone_vec | {
         let first_poly_multi = MultiPolygon::from(isochrone_vec[0].polygon.clone());
         let intersection: MultiPolygon<f64> = isochrone_vec.iter().fold(first_poly_multi, |acc, isochrone| { 

@@ -1,6 +1,8 @@
 use neon::prelude::*;
 use std::collections::HashSet;
 use std::collections::HashMap;
+use crate::ors_helpers::ORSError;
+use chrono::Duration;
 
 #[derive(Debug)]
 pub struct Destination {
@@ -10,7 +12,7 @@ pub struct Destination {
     pub bike: bool,
     pub drive: bool,
     pub transit: bool,
-    pub time: f64,
+    pub time: Duration,
     pub id: String
 }
 
@@ -20,60 +22,46 @@ pub struct Group {
     pub destinations: HashSet<String>
 }
 
-pub fn get_destinations(cx: &mut FunctionContext, destinations_js: Handle<JsObject>) -> Option<HashMap<String, Destination>> {
-    let destination_property_names = destinations_js.get_own_property_names(cx);
-    let destination_property_names = match destination_property_names {
-        Ok(names) => names,
-        Err(_) => return None,
-    };
-    let destination_property_names = destination_property_names.to_vec(cx);
-    let destination_property_names = match destination_property_names {
-        Ok(names) => names,
-        Err(_) => return None,
-    };
 
-    let destinations: Vec<Destination> = destination_property_names
+pub fn get_destinations(cx: &mut FunctionContext, destinations_js: Handle<JsObject>) -> Result<HashMap<String, Destination>, ORSError> {
+    let destination_property_names = destinations_js.get_own_property_names(cx)?;
+    let destination_property_names = destination_property_names.to_vec(cx)?;
+
+    let destinations: Result<Vec<Destination>, _> = destination_property_names
         .iter()
-        .filter_map(|js_dest_id| {
+        .map(|js_dest_id| {
             let dest_id = js_dest_id
                 .downcast::<JsString>()
                 // If downcast fails, default to using 0
                 .unwrap_or(cx.string(""));
                 // Get the value of the unwrapped value
-            let destination = destinations_js.get(cx, dest_id).ok()?
-                                             .downcast::<JsObject>().unwrap();
-            let coordinate = destination.get(cx, "coordinate").ok()?
-                                        .downcast::<JsObject>().unwrap();
-            let lat: f64 = coordinate.get(cx, "latitude").ok()?.downcast::<JsNumber>().unwrap().value();
-            let lon: f64 = coordinate.get(cx, "longitude").ok()?.downcast::<JsNumber>().unwrap().value(); 
-
-            let transport_modes = destination.get(cx, "transportModes").ok()?
-                                             .downcast::<JsObject>().unwrap();
-            let walk: bool = transport_modes.get(cx, "walk").ok()?
-                                            .downcast::<JsBoolean>().unwrap().value();
-            let bike: bool = transport_modes.get(cx, "bike").ok()?
-                                            .downcast::<JsBoolean>().unwrap().value();
-            let drive: bool = transport_modes.get(cx, "drive").ok()?
-                                            .downcast::<JsBoolean>().unwrap().value();
-            let transit: bool = transport_modes.get(cx, "transit").ok()?
-                                            .downcast::<JsBoolean>().unwrap().value();
-
-            let time: f64 = destination.get(cx, "transitTime").ok()?
-                                       .downcast::<JsNumber>().unwrap().value();
-
-            let id: String = destination.get(cx, "id").ok()?
-                                        .downcast::<JsString>().unwrap().value();
-
-            let destination = Destination { lat: lat, lon: lon, walk: walk, bike: bike, drive: drive, transit: transit, time: time, id: id };
-            return Some(destination);
+            let destination     = destinations_js.get(cx, dest_id)?.downcast::<JsObject>().unwrap();
+            let coordinate      = destination.get(cx, "coordinate")?.downcast::<JsObject>().unwrap();
+            let lat: f64        = coordinate.get(cx, "latitude")?.downcast::<JsNumber>().unwrap().value();
+            let lon: f64        = coordinate.get(cx, "longitude")?.downcast::<JsNumber>().unwrap().value();
+            let transport_modes = destination.get(cx, "transportModes")?.downcast::<JsObject>().unwrap();
+            let walk: bool      = transport_modes.get(cx, "walk")?.downcast::<JsBoolean>().unwrap().value();
+            let bike: bool      = transport_modes.get(cx, "bike")?.downcast::<JsBoolean>().unwrap().value();
+            let drive: bool     = transport_modes.get(cx, "drive")?.downcast::<JsBoolean>().unwrap().value();
+            let transit: bool   = transport_modes.get(cx, "transit")?.downcast::<JsBoolean>().unwrap().value();
+            let time: f64       = destination.get(cx, "transitTime")?.downcast::<JsNumber>().unwrap().value();
+            if (time.fract() != 0.0) {
+                return Err(ORSError::new("time must be an integral value"));
+            }
+            let id: String      = destination.get(cx, "id")?.downcast::<JsString>().unwrap().value();
+            let destination = Destination { lat: lat, lon: lon, walk: walk, bike: bike, drive: drive, transit: transit, time: Duration::minutes(time as i64), id: id };
+            return Ok(destination);
         }).collect();
+    let destinations = match destinations {
+        Ok(destinations) => destinations,
+        Err(err) => return Err(err),
+    };
     let mut destinations_map = HashMap::new();
     for destination in destinations {
         let id = destination.id.clone();
         destinations_map.insert(id, destination);
     }
-    return Some(destinations_map);
-
+    return Ok(destinations_map);
 }
 
 pub fn get_groups(cx: &mut FunctionContext, groups_js: Handle<JsObject>) -> Option<Vec<Group>> {

@@ -159,6 +159,9 @@ class AppleMap extends Component {
         if (!(this.map instanceof this.mapkit.Map)) {
             return
         }
+        if (Object.keys(isochrones).length >= 0) {
+            this.map.removeOverlays(this.map.overlays)
+        }
         const that = this
         isochrones.map( points => {
             const newPoints = points.reduce((point) => {

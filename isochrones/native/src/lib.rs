@@ -83,7 +83,11 @@ impl Task for BackgroundTask {
 
     fn complete(self, mut cx: TaskContext, result: Result<Self::Output, Self::Error>) -> JsResult<Self::JsEvent> {
         println!("[RUST] in complete function");
-        Ok(cx.string(result.unwrap()))
+        let string = match result {
+            Ok(value) => value,
+            Err(error) => error
+        };
+        Ok(cx.string(string))
     }
 }
 
@@ -93,8 +97,8 @@ fn generate_isochrones_async(mut cx: FunctionContext) -> JsResult<JsString> {
     let destinations_js = destinations_object_handle.downcast::<JsObject>()
                                                     .unwrap_or(JsObject::new(&mut cx));
     let destinations = match js_helpers::get_destinations(&mut cx, destinations_js) {
-        Some(destinations) => destinations,
-        None => return Ok(cx.string("destinations argument is malformed")),
+        Ok(destinations) => destinations,
+        Err(err) => return Ok(cx.string(format!("destinations argument is malformed, error is {}", err).as_str())),
     };
     let groups_object_handle: Handle<JsObject> = cx.argument(1)?;
     let groups_js = groups_object_handle.downcast::<JsObject>()

@@ -27,3 +27,4 @@ geo-booleanop = "=0.3.2"
 geo-types = "=0.6.2"
 geojson = { version = "=0.21.0", features = ["geo-types"] }
 itertools = "0.10.0"
+chrono = "0.4.19"

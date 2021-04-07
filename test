@@ -1,0 +1,47 @@
+[RUST] query_results =  
+[   
+    Isochrone {
+        id: "4258036681961592",
+        mode: "foot-walking",
+        polygon: Polygon { exterior: LineString([Coordinate { x: -122.420804, y: 37.761928 }, Coordinate { x: -122.420782, y: 37.761568 }, Coordinate { x: -122.420166, y: 37.759943 }, Coordinate { x: -122.415923, y: 37.757041 }, Coordinate { x: -122.412813, y: 37.754817 }, Coordinate { x: -122.411322, y: 37.754344 }, Coordinate { x: -122.410963, y: 37.754378 }, Coordinate { x: -122.409236, y: 37.755509 }, Coordinate { x: -122.406609, y: 37.758234 }, Coordinate { x: -122.404598, y: 37.760634 }, Coordinate { x: -122.403443, y: 37.761981 }, Coordinate { x: -122.403464, y: 37.762341 }, Coordinate { x: -122.405269, y: 37.764334 }, Coordinate { x: -122.407377, y: 37.765676 }, Coordinate { x: -122.411463, y: 37.769055 }, Coordinate { x: -122.412246, y: 37.768936 }, Coordinate { x: -122.413613, y: 37.76851 }, Coordinate { x: -122.414253, y: 37.767983 }, Coordinate { x: -122.416665, y: 37.765954 }, Coordinate { x: -122.418791, y: 37.76396 }, Coordinate { x: -122.420804, y: 37.761928 }]), interiors: [] }
+    },
+    Isochrone {
+        id: "132083463926734",
+        mode: "foot-walking",
+        polygon: Polygon { exterior: LineString([Coordinate { x: -122.433445, y: 37.761169 }, Coordinate { x: -122.433421, y: 37.76081 }, Coordinate { x: -122.432335, y: 37.760067 }, Coordinate { x: -122.431247, y: 37.759325 }, Coordinate { x: -122.429114, y: 37.75785 }, Coordinate { x: -122.427927, y: 37.757052 }, Coordinate { x: -122.426818, y: 37.756321 }, Coordinate { x: -122.425521, y: 37.755478 }, Coordinate { x: -122.423309, y: 37.754167 }, Coordinate { x: -122.422902, y: 37.754204 }, Coordinate { x: -122.420851, y: 37.756006 }, Coordinate { x: -122.419932, y: 37.756798 }, Coordinate { x: -122.418814, y: 37.757794 }, Coordinate { x: -122.418081, y: 37.758521 }, Coordinate { x: -122.414407, y: 37.761963 }, Coordinate { x: -122.414427, y: 37.762322 }, Coordinate { x: -122.414894, y: 37.762753 }, Coordinate { x: -122.418711, y: 37.765294 }, Coordinate { x: -122.421951, y: 37.767389 }, Coordinate { x: -122.424112, y: 37.768826 }, Coordinate { x: -122.424372, y: 37.76897 }, Coordinate { x: -122.424731, y: 37.768937 }, Coordinate { x: -122.429024, y: 37.765561 }, Coordinate { x: -122.431025, y: 37.763605 }, Coordinate { x: -122.431835, y: 37.762803 }, Coordinate { x: -122.433445, y: 37.761169 }]), interiors: [] }
+    }
+]
+
+[RUST] [get_isochrone_intersections] here 1.
+[
+    [
+        Isochrone {
+            id: "4258036681961592",
+            mode: "AllModes",
+            polygon: Polygon { exterior: LineString([Coordinate { x: -122.420804, y: 37.761928 }, Coordinate { x: -122.420782, y: 37.761568 }, Coordinate { x: -122.420166, y: 37.759943 }, Coordinate { x: -122.415923, y: 37.757041 }, Coordinate { x: -122.412813, y: 37.754817 }, Coordinate { x: -122.411322, y: 37.754344 }, Coordinate { x: -122.410963, y: 37.754378 }, Coordinate { x: -122.409236, y: 37.755509 }, Coordinate { x: -122.406609, y: 37.758234 }, Coordinate { x: -122.404598, y: 37.760634 }, Coordinate { x: -122.403443, y: 37.761981 }, Coordinate { x: -122.403464, y: 37.762341 }, Coordinate { x: -122.405269, y: 37.764334 }, Coordinate { x: -122.407377, y: 37.765676 }, Coordinate { x: -122.411463, y: 37.769055 }, Coordinate { x: -122.412246, y: 37.768936 }, Coordinate { x: -122.413613, y: 37.76851 }, Coordinate { x: -122.414253, y: 37.767983 }, Coordinate { x: -122.416665, y: 37.765954 }, Coordinate { x: -122.418791, y: 37.76396 }, Coordinate { x: -122.420804, y: 37.761928 }]), interiors: [] }
+        }
+    ],
+    [
+        Isochrone { 
+            id: "132083463926734",
+            mode: "AllModes",
+            polygon: Polygon { exterior: LineString([Coordinate { x: -122.433445, y: 37.761169 }, Coordinate { x: -122.433421, y: 37.76081 }, Coordinate { x: -122.432335, y: 37.760067 }, Coordinate { x: -122.431247, y: 37.759325 }, Coordinate { x: -122.429114, y: 37.75785 }, Coordinate { x: -122.427927, y: 37.757052 }, Coordinate { x: -122.426818, y: 37.756321 }, Coordinate { x: -122.425521, y: 37.755478 }, Coordinate { x: -122.423309, y: 37.754167 }, Coordinate { x: -122.422902, y: 37.754204 }, Coordinate { x: -122.420851, y: 37.756006 }, Coordinate { x: -122.419932, y: 37.756798 }, Coordinate { x: -122.418814, y: 37.757794 }, Coordinate { x: -122.418081, y: 37.758521 }, Coordinate { x: -122.414407, y: 37.761963 }, Coordinate { x: -122.414427, y: 37.762322 }, Coordinate { x: -122.414894, y: 37.762753 }, Coordinate { x: -122.418711, y: 37.765294 }, Coordinate { x: -122.421951, y: 37.767389 }, Coordinate { x: -122.424112, y: 37.768826 }, Coordinate { x: -122.424372, y: 37.76897 }, Coordinate { x: -122.424731, y: 37.768937 }, Coordinate { x: -122.429024, y: 37.765561 }, Coordinate { x: -122.431025, y: 37.763605 }, Coordinate { x: -122.431835, y: 37.762803 }, Coordinate { x: -122.433445, y: 37.761169 }]), interiors: [] }
+        }
+    ]
+]
+
+
+[
+    [
+        Isochrone { id: "4258036681961592", mode: "AllModes", polygon: Polygon { exterior: LineString([Coordinate { x: -122.420804, y: 37.761928 }, Coordinate { x: -122.420782, y: 37.761568 }, Coordinate { x: -122.420166, y: 37.759943 }, Coordinate { x: -122.415923, y: 37.757041 }, Coordinate { x: -122.412813, y: 37.754817 }, Coordinate { x: -122.411322, y: 37.754344 }, Coordinate { x: -122.410963, y: 37.754378 }, Coordinate { x: -122.409236, y: 37.755509 }, Coordinate { x: -122.406609, y: 37.758234 }, Coordinate { x: -122.404598, y: 37.760634 }, Coordinate { x: -122.403443, y: 37.761981 }, Coordinate { x: -122.403464, y: 37.762341 }, Coordinate { x: -122.405269, y: 37.764334 }, Coordinate { x: -122.407377, y: 37.765676 }, Coordinate { x: -122.411463, y: 37.769055 }, Coordinate { x: -122.412246, y: 37.768936 }, Coordinate { x: -122.413613, y: 37.76851 }, Coordinate { x: -122.414253, y: 37.767983 }, Coordinate { x: -122.416665, y: 37.765954 }, Coordinate { x: -122.418791, y: 37.76396 }, Coordinate { x: -122.420804, y: 37.761928 }]), interiors: [] } },
+        Isochrone { id: "132083463926734", mode: "AllModes", polygon: Polygon { exterior: LineString([Coordinate { x: -122.433445, y: 37.761169 }, Coordinate { x: -122.433421, y: 37.76081 }, Coordinate { x: -122.432335, y: 37.760067 }, Coordinate { x: -122.431247, y: 37.759325 }, Coordinate { x: -122.429114, y: 37.75785 }, Coordinate { x: -122.427927, y: 37.757052 }, Coordinate { x: -122.426818, y: 37.756321 }, Coordinate { x: -122.425521, y: 37.755478 }, Coordinate { x: -122.423309, y: 37.754167 }, Coordinate { x: -122.422902, y: 37.754204 }, Coordinate { x: -122.420851, y: 37.756006 }, Coordinate { x: -122.419932, y: 37.756798 }, Coordinate { x: -122.418814, y: 37.757794 }, Coordinate { x: -122.418081, y: 37.758521 }, Coordinate { x: -122.414407, y: 37.761963 }, Coordinate { x: -122.414427, y: 37.762322 }, Coordinate { x: -122.414894, y: 37.762753 }, Coordinate { x: -122.418711, y: 37.765294 }, Coordinate { x: -122.421951, y: 37.767389 }, Coordinate { x: -122.424112, y: 37.768826 }, Coordinate { x: -122.424372, y: 37.76897 }, Coordinate { x: -122.424731, y: 37.768937 }, Coordinate { x: -122.429024, y: 37.765561 }, Coordinate { x: -122.431025, y: 37.763605 }, Coordinate { x: -122.431835, y: 37.762803 }, Coordinate { x: -122.433445, y: 37.761169 }]), interiors: [] } }
+    ]
+]
+
+MultiPolygon([
+    Polygon { 
+        exterior: LineString([Coordinate { x: -122.420804, y: 37.761928 }, Coordinate { x: -122.420782, y: 37.761568 }, Coordinate { x: -122.420166, y: 37.759943 }, Coordinate { x: -122.415923, y: 37.757041 }, Coordinate { x: -122.412813, y: 37.754817 }, Coordinate { x: -122.411322, y: 37.754344 }, Coordinate { x: -122.410963, y: 37.754378 }, Coordinate { x: -122.409236, y: 37.755509 }, Coordinate { x: -122.406609, y: 37.758234 }, Coordinate { x: -122.404598, y: 37.760634 }, Coordinate { x: -122.403443, y: 37.761981 }, Coordinate { x: -122.403464, y: 37.762341 }, Coordinate { x: -122.405269, y: 37.764334 }, Coordinate { x: -122.407377, y: 37.765676 }, Coordinate { x: -122.411463, y: 37.769055 }, Coordinate { x: -122.412246, y: 37.768936 }, Coordinate { x: -122.413613, y: 37.76851 }, Coordinate { x: -122.414253, y: 37.767983 }, Coordinate { x: -122.416665, y: 37.765954 }, Coordinate { x: -122.418791, y: 37.76396 }, Coordinate { x: -122.420804, y: 37.761928 }]),
+        interiors: [] 
+    }
+])
+[0] [RUST] [get_isochrone_intersections] here 2.
