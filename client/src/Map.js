@@ -5,6 +5,11 @@ import landmarkAnnotationCallout from './MapCallout'
 class AppleMap extends Component {
     mapkit = window.mapkit
 
+    state = {
+        placesAnnotations: null,
+        destinationAnnotations: null,
+    };
+
     isMapInitialized() {
         if (!this.props.token) {
             return false;
@@ -70,42 +75,46 @@ class AppleMap extends Component {
 	}
 
 	componentDidUpdate(prevProps) {
-		const { token, places, boundingRegion, isochrones } = this.props
+		const { token, places, boundingRegion, isochrones, destinations } = this.props
+        var justInitialized = false
         if (!this.isMapInitialized() && token !== prevProps.token) {
             this.initializeMap(token)
             if (!this.isMapInitialized()) {
                 console.error("Map.componentDidUpdate ERROR: Could not initialize mapkit with new token: " + token)
                 return;
             }
+            justInitialized = true
         } 
         if (!this.isMapInitialized()) {
             return
         }
-        if (places !== prevProps.places) {
+        if (places !== prevProps.places || justInitialized) {
             this.updateAnnotationsFromPlaces(places)
         }
-        if (boundingRegion !== prevProps.boundingRegion) {
+        if (boundingRegion !== prevProps.boundingRegion || justInitialized) {
             this.updateMapRegion(boundingRegion)
         }
-        if (isochrones !== prevProps.isochrones) {
+        if (isochrones !== prevProps.isochrones || justInitialized) {
             this.updateIsochrones(isochrones)
+        }
+        if (destinations !== prevProps.destinations || justInitialized) {
+            this.updateAnnotationsFromDestinations(destinations)
         }
 	}
 
-    clearAnnotations() {
+
+    updateAnnotationsFromPlaces(places) {
         if (!this.map) {
             return
         }
         if (!this.map.annotations) {
             return
         }
-        this.map.removeAnnotations(this.map.annotations) // clear annotations
-    }
-
-    updateAnnotationsFromPlaces(places) {
-        this.clearAnnotations()
         if (!places) {
             return
+        }
+        if (this.state.placesAnnotations !== null) {
+            this.map.removeAnnotations(this.state.placesAnnotations) // clear annotations
         }
         const annotations = places.map((place) => {
             const coordinate = new this.mapkit.Coordinate(place.coordinate.latitude, place.coordinate.longitude)
@@ -121,7 +130,40 @@ class AppleMap extends Component {
             return annotation
         })
         this.map.showItems(annotations)
+        this.setState({placesAnnotations: annotations})
     }
+
+    updateAnnotationsFromDestinations(destinations) {
+        if (!this.map) {
+            return
+        }
+        if (!this.map.annotations) {
+            return
+        }
+        if (!destinations) {
+            return
+        }
+        if (this.state.destinationAnnotations !== null) {
+            this.map.removeAnnotations(this.state.destinationAnnotations) // clear annotations
+        }
+        const annotations = Object.keys(destinations).map((id) => {
+            const place = destinations[id]
+            const coordinate = new this.mapkit.Coordinate(place.coordinate.latitude, place.coordinate.longitude)
+            var annotation = new this.mapkit.MarkerAnnotation(coordinate);
+            console.log("adding annotation", place.name);
+            annotation.title = place.name;
+            annotation.color = "#00FFFF";
+            annotation.data.place = place;
+            annotation.data.callback = (update) => {
+                console.log("calling back!")
+            }
+            annotation.callout = landmarkAnnotationCallout
+            return annotation
+        })
+        this.map.showItems(annotations)
+        this.setState({destinationAnnotations: annotations})
+    }
+
 
     convertToMapkit(boundingRegionObj) {
         if (boundingRegionObj instanceof this.mapkit.CoordinateRegion) {

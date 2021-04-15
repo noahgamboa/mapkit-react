@@ -4,12 +4,11 @@ extern crate geo_types;
 use futures::{stream, StreamExt}; // 0.3.5
 use itertools::Itertools;
 use std::collections::HashSet;
-use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
 use serde::{Deserialize, Serialize};
-use serde_json::{Value};
-use serde_json::Value::Array;
+// use serde_json::{Value};
+// use serde_json::Value::Array;
 use crate::js_helpers::Destination;
 use crate::js_helpers::Group;
 use geo_booleanop::boolean::BooleanOp;
@@ -66,10 +65,42 @@ impl From<Throw> for ORSError {
     }
 }
 
+impl From<serde_json::Error> for ORSError {
+    fn from(err: serde_json::Error) -> Self {
+        ORSError::new(format!("serde_json error! {}", err).as_str())
+    }
+}
+
 #[derive(Serialize, Deserialize)]
-struct IsochroneRequest {
+pub struct IsochroneRequest {
     locations: Vec<Vec<f64>>,
     range: Vec<f64> ,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Property {
+    group_index: i32,
+    value: f64,
+    center: Vec<f64>
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Geometry { 
+    coordinates: Vec<Vec<Vec<f64>>>,
+    r#type: String
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Feature {
+    r#type: String, 
+    properties: Property,
+    geometry: Geometry 
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct IsochroneResult {
+    r#type: String,
+    features: Vec<Feature>
 }
 
 #[derive(Debug)]
@@ -79,30 +110,85 @@ pub struct Isochrone {
     polygon: Polygon<f64>
 }
 
-fn find_coordinates(coordinate: &Value) -> Result<Coordinate<f64>, ORSError> {
-    let coordinate = match coordinate {
-        Array(coordinate) => coordinate,
-        _ => return Err(ORSError::new("Coordinate is not a value")),
+// fn find_coordinates(coordinate: &Value) -> Result<Coordinate<f64>, ORSError> {
+//     let coordinate = match coordinate {
+//         Array(coordinate) => coordinate,
+//         _ => return Err(ORSError::new("Coordinate is not a value")),
+//     };
+//     if coordinate.len() != 2 {
+//         return Err(ORSError::new("Coordinate is not a vec of length 2"));
+//     }
+//     let lon = match coordinate[0].as_f64() { 
+//         Some(v) => v,
+//         _ => return Err(ORSError::new("Coordinate 0 is not an f64")),
+//     };
+//     let lat = match coordinate[1].as_f64() {
+//         Some(v) => v,
+//         _ => return Err(ORSError::new("Coordinate 1 is not an f64")),
+//     };
+//     return Ok(Coordinate { x: lon, y: lat });
+// }
+
+pub async fn run_queries(request: IsochroneRequest, client: &reqwest::Client, url: &String, token: &String, destinations: &[&Destination], transport_mode: &String) -> Result<Vec<Isochrone>, ORSError> {
+    println!("Running request...");
+    let query_result = client
+        .post(url)
+        .header("Content-Type", "application/json; charset=utf-8")
+        .header("Accept", "application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8")
+        .header("Authorization", token)
+        .json(&request)
+        .send()
+        .await?;
+
+    let text = query_result.text().await?;
+    let isochrone_result: Result<IsochroneResult, _> = serde_json::from_str(&text);
+    // let isochrone_result: Result<IsochroneResult, _> = query_result.json().await;
+
+    let isochrone_result: IsochroneResult = match isochrone_result {
+        Ok(result) => result,
+        Err(err) => {
+            return Err(ORSError::new(format!("{:?} :: result is {}", err, text).as_str()))
+        }
     };
-    if coordinate.len() != 2 {
-        return Err(ORSError::new("Coordinate is not a vec of length 2"));
+
+    let mut res = Vec::new();
+
+    for (i, destination) in destinations.iter().enumerate() {
+        let id = &destination.id;
+        let time = destination.time.num_seconds() as f64;
+        let feature = isochrone_result.features.iter().find(|&feature| {
+            if feature.properties.group_index != (i as i32) {
+                return false;
+            }; 
+            if feature.properties.value != time {
+                return false;
+            }
+            return true;
+        });
+        let feature = match feature {
+            Some(feature) => feature,
+            _ => return Err(ORSError::new(format!("could not find feature for group_index {} with time {} in {:?}", i, time, isochrone_result.features).as_str())),
+        };
+        if feature.geometry.coordinates.len() != 1 {
+            return Err(ORSError::new(format!("Coordinates returned is not an array of length 1: {:?}", feature.geometry.coordinates).as_str()));
+        }
+        let coordinates: Vec<Coordinate<f64>> = feature.geometry.coordinates[0].iter().map(|coordinate| {
+            let lon = coordinate[0];
+            let lat = coordinate[1];
+            return Coordinate { x: lon, y: lat };
+        }).collect();
+        let exterior: LineString<f64> = coordinates.into();
+        let polygon = Polygon::new(exterior, vec![]);
+        let isochrone = Isochrone { id: id.to_string(), mode: transport_mode.clone(),  polygon: polygon };
+        res.push(isochrone);
     }
-    let lon = match coordinate[0].as_f64() { 
-        Some(v) => v,
-        _ => return Err(ORSError::new("Coordinate 0 is not an f64")),
-    };
-    let lat = match coordinate[1].as_f64() {
-        Some(v) => v,
-        _ => return Err(ORSError::new("Coordinate 1 is not an f64")),
-    };
-    return Ok(Coordinate { x: lon, y: lat });
+    return Ok(res);
 }
 
 #[tokio::main]
 pub async fn query_ors(transport_mode: String, token: &String, destinations: &Vec<&Destination>) -> Result<Vec<Isochrone>, ORSError> {
     // TODO: can only query in groups of 5, so need to make a new query for each set of 5...
-    let mut features = vec![];
-    let requests: Vec<IsochroneRequest> = destinations.chunks(5).map(|destination_chunk| {
+    let requests: Vec<(IsochroneRequest, &[&Destination])> = destinations.chunks(5).map(|destination_chunk| {
         let mut locations = Vec::new();
         let mut range = Vec::new();
         for destination in destination_chunk {
@@ -112,87 +198,26 @@ pub async fn query_ors(transport_mode: String, token: &String, destinations: &Ve
             locations.push(latlon);
             range.push(destination.time.num_seconds() as f64);
         }
-        return IsochroneRequest {
+        return (IsochroneRequest {
             locations: locations,
             range: range
-        };
+        }, destination_chunk);
     }).collect();
 
     let num_requests = requests.len();
-    let features = stream::iter(requests).map(|isochrone_request| {
-        async move {
-            let url = "https://api.openrouteservice.org/v2/isochrones/".to_owned() + &transport_mode;
-            println!("Running request...");
-            let res: Value = reqwest::Client::new()
-                .post(url)
-                .header("Content-Type", "application/json; charset=utf-8")
-                .header("Accept", "application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8")
-                .header("Authorization", token)
-                .json(&isochrone_request)
-                .send()
-                .await?
-                .json()
-                .await?;
-            println!("\n\n{:?}\n\n", res);
-            let sub_features = &res["features"];
-            let sub_features = match sub_features {
-                Array(vec) => vec,
-                _ => return Err(ORSError::new("Features is not an array")),
-            };
-            return Ok(sub_features);
+    let client = reqwest::Client::new();
+    let url = "https://api.openrouteservice.org/v2/isochrones/".to_owned() + &transport_mode;
+    let features: Vec<Result<Vec<Isochrone>, ORSError>> = stream::iter(requests).map(|request| {
+        async {
+            return run_queries(request.0, &client, &url, &token, request.1, &transport_mode).await;
         }
-    }).buffer_unordered(num_requests);
+    }).buffer_unordered(num_requests).collect().await;
 
-    let features: Result<Vec<Array>, _> = features.map(|sub_features| async {
-        match sub_features {
-            Ok(val) => return Ok(val),
-            Err(e) => return Err(e)
-        };
-    }).await;
-
-
-    let mut res = Vec::new();
-
-    for (i, destination) in destinations.iter().enumerate() {
-        let id = &destination.id;
-        let time = destination.time.num_seconds() as f64;
-        let polygon = features.iter().find(|&feature| {
-            let properties = &feature["properties"];
-            let group_index = &properties["group_index"];
-            if group_index != i {
-                return false;
-            }
-            let value = &properties["value"];
-            if value != time {
-                return false;
-            }
-            return true;
-        });
-        let polygon = match polygon {
-            Some(polygon) => polygon,
-            _ => return Err(ORSError::new(format!("could not find polygon for index {} with time {}", i, destination.time).as_str())),
-        };
-        let coordinates = match &polygon["geometry"]["coordinates"] {
-            Array(coordinates) => coordinates,
-            _ => return Err(ORSError::new("coordinates is not an array")),
-        }; 
-        if coordinates.len() != 1 {
-            return Err(ORSError::new("coordinates is not an array of length 1"));
-        }
-        let coordinates = match &coordinates[0] {
-            Array(coordinates) => coordinates,
-            _ => return Err(ORSError::new("inner coordinates is not an array")),
-        };
-        let coordinates: Vec<Coordinate<f64>> = match coordinates.iter().map(find_coordinates).collect() {
-            Ok(res) => res,
-            Err(error) => return Err(error)
-        };
-        let exterior: LineString<f64> = coordinates.into();
-        let polygon = Polygon::new(exterior, vec![]);
-        let isochrone = Isochrone { id: id.to_string(), mode: transport_mode.clone(),  polygon: polygon };
-        res.push(isochrone);
-    }
-    return Ok(res);
+    let features: Result<Vec<Vec<Isochrone>>, ORSError> = features.into_iter().collect();
+    match features {
+        Ok(features) => return Ok(features.into_iter().flatten().collect()),
+        Err(err) => return Err(err),
+    };
 }
 
 fn get_union(isochrones: &Vec<&Isochrone>) -> Result<Isochrone, ORSError> {
@@ -288,7 +313,7 @@ pub fn get_isochrone_intersections(groups: &Vec<Group>,  isochrones: &Vec<Isochr
     println!("{:?}", all_isochrones);
 
 
-    if (isochrones.len() < 1) {
+    if isochrones.len() < 1 {
         return Err(ORSError::new("No isochrones!"));
     }
     let initial_multi_poly: MultiPolygon<f64> = MultiPolygon::from(vec![Polygon::new(LineString::from(vec![(0f64,0f64)]), vec![] )]);

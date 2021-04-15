@@ -1,9 +1,0 @@
-[
-    [
-        Isochrone { id: "132083463926734", mode: "AllModes", polygon: Polygon { exterior: LineString([Coordinate { x: -122.424546, y: 37.761701 }, Coordinate { x: -122.424524, y: 37.761341 }, Coordinate { x: -122.423991, y: 37.761267 }, Coordinate { x: -122.423632, y: 37.7613 }, Coordinate { x: -122.423342, y: 37.761414 }, Coordinate { x: -122.423363, y: 37.761773 }, Coordinate { x: -122.423792, y: 37.761954 }, Coordinate { x: -122.42415, y: 37.761915 }, Coordinate { x: -122.424546, y: 37.761701 }]), interiors: [] } },
-        Isochrone { id: "4258036681961592", mode: "AllModes", polygon: Polygon { exterior: LineString([Coordinate { x: -122.412564, y: 37.761804 }, Coordinate { x: -122.412544, y: 37.761445 }, Coordinate { x: -122.412202, y: 37.76121 }, Coordinate { x: -122.411844, y: 37.761248 }, Coordinate { x: -122.411584, y: 37.761499 }, Coordinate { x: -122.411605, y: 37.761858 }, Coordinate { x: -122.411919, y: 37.76204 }, Coordinate { x: -122.412278, y: 37.76201 }, Coordinate { x: -122.412564, y: 37.761804 }]), interiors: [] } }
-    ]
-]
-[0] MultiPolygon([Polygon { exterior: LineString([Coordinate { x: -122.424546, y: 37.761701 }, Coordinate { x: -122.424524, y: 37.761341 }, Coordinate { x: -122.423991, y: 37.761267 }, Coordinate { x: -122.423632, y: 37.7613 }, Coordinate { x: -122.423342, y: 37.761414 }, Coordinate { x: -122.423363, y: 37.761773 }, Coordinate { x: -122.423792, y: 37.761954 }, Coordinate { x: -122.42415, y: 37.761915 }, Coordinate { x: -122.424546, y: 37.761701 }]), interiors: [] }])
-[0] MultiPolygon([])
-

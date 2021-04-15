@@ -45,7 +45,7 @@ pub fn get_destinations(cx: &mut FunctionContext, destinations_js: Handle<JsObje
             let drive: bool     = transport_modes.get(cx, "drive")?.downcast::<JsBoolean>().unwrap().value();
             let transit: bool   = transport_modes.get(cx, "transit")?.downcast::<JsBoolean>().unwrap().value();
             let time: f64       = destination.get(cx, "transitTime")?.downcast::<JsNumber>().unwrap().value();
-            if (time.fract() != 0.0) {
+            if time.fract() != 0.0 {
                 return Err(ORSError::new("time must be an integral value"));
             }
             let id: String      = destination.get(cx, "id")?.downcast::<JsString>().unwrap().value();

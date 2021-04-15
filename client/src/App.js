@@ -342,6 +342,7 @@ class App extends Component {
                     updateBoundingRegion={this.setBoundingRegion}
                     boundingRegion={this.state.boundingRegion}
                     places={this.state.places}
+                    destinations={this.state.destinations}
                     addDestination={this.addDestination}
                     isochrones={this.state.isochrones}
                 />

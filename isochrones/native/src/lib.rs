@@ -5,8 +5,7 @@ use neon::register_module;
 use std::collections::HashMap;
 use js_helpers::Destination;
 use js_helpers::Group;
-use ors_helpers::Isochrone;
-use geojson::{Feature, GeoJson, Geometry, Value};
+use geojson::{Feature, GeoJson, Geometry};
 
 pub mod js_helpers;
 pub mod ors_helpers;
