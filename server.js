@@ -52,10 +52,10 @@ app.post('/saveState', (req, res, next) => {
         return res.status(400).json({message:"'data' expected at top level of json"})
     }
     // const data = typeof(json.data) === "string" ? json.data : JSON.stringify(json.data)
-    console.log("Saving state!")
     if ("mapToken" in json.data) {
         delete json.data.mapToken
     }
+    console.log("Saving state!", json.data)
     db.set(json.userId, json.data)
     res.status(200).json({ result: "saved state for '" + json.userId + "'." });
 })
@@ -75,6 +75,7 @@ app.post('/loadState', (req, res, next) => {
     if ("mapToken" in result) {
         delete result.mapToken
     }
+    console.log("Loading state!", result)
     return res.status(200).json(db.get(json.userId))
 })
 

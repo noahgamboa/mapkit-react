@@ -55,15 +55,20 @@ class AppleMap extends Component {
         // latitudeDelta: 0.10626597795635462
         // longitudeDelta: 0.16547385603189468
         // )
-        const search = new this.mapkit.Search();
-        search.search("San Francisco, California", (error, data) => {
-            if (error) {
-                console.error("Could not find default bounding region, received: " + error)
-                return
-            }
-            console.log("Initializing Bounding Region from Search: " + data.boundingRegion)
-            this.map.region = data.boundingRegion
-        });
+        const boundingRegion = this.convertToMapkit(this.props.boundingRegion)
+        if (!(boundingRegion instanceof this.mapkit.CoordinateRegion)) {
+            const search = new this.mapkit.Search();
+            search.search("San Francisco, California", (error, data) => {
+                if (error) {
+                    console.error("Could not find default bounding region, received: " + error)
+                    return
+                }
+                console.log("Initializing Bounding Region from Default Search: " + data.boundingRegion)
+            });
+        } else {
+            console.log("Initializing Bounding Region from props: " + this.props.boundingRegion)
+            this.updateMapRegion(this.props.boundingRegion)
+        }
     }
 
     componentDidMount() {
@@ -91,7 +96,7 @@ class AppleMap extends Component {
         if (places !== prevProps.places || justInitialized) {
             this.updateAnnotationsFromPlaces(places)
         }
-        if (boundingRegion !== prevProps.boundingRegion || justInitialized) {
+        if (boundingRegion !== prevProps.boundingRegion) {
             this.updateMapRegion(boundingRegion)
         }
         if (isochrones !== prevProps.isochrones || justInitialized) {
@@ -220,7 +225,8 @@ class AppleMap extends Component {
                 strokeOpacity: .2,
                 lineWidth: 2,
                 lineJoin: "round",
-                lineDash: [2, 2, 6, 2, 6, 2]
+                lineDash: [2, 2, 6, 2, 6, 2],
+                fillOpacity: 0.8
             });
             var rectangle = new that.mapkit.PolygonOverlay(newPoints, { style: style });
             that.map.addOverlay(rectangle);

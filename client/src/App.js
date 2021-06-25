@@ -227,6 +227,7 @@ class App extends Component {
 
         loader("noah")
             .then((newState) => {
+                console.log("Loading bounding region: ", newState.boundingRegion)
                 this.setState(newState)
             })
             .catch(error => {

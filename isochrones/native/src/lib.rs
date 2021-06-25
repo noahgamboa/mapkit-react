@@ -54,12 +54,13 @@ impl Task for BackgroundTask {
             }
 
             // make the query with each destination and accumulate them into the map
-            let query_result = ors_helpers::query_ors(transport_mode.to_string(), &self.token, &dests_in_mode)?;
+            let query_result = ors_helpers::query_ors(false, transport_mode.to_string(), &self.token, &dests_in_mode)?;
             query_results.extend(query_result);
         }
-        println!("[RUST] query_results =  {:?}", query_results);
+        // println!("[RUST] query_results =  {:?}", query_results);
 
 
+        println!("[RUST] here 0");
         let polygons = ors_helpers::get_isochrone_intersections(&self.groups, &query_results)?;
         println!("[RUST] here 1");
 

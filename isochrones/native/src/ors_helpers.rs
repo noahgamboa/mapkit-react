@@ -7,6 +7,7 @@ use std::collections::HashSet;
 use std::error::Error;
 use std::fmt;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 // use serde_json::{Value};
 // use serde_json::Value::Array;
 use crate::js_helpers::Destination;
@@ -14,6 +15,7 @@ use crate::js_helpers::Group;
 use geo_booleanop::boolean::BooleanOp;
 use geo_types::{MultiPolygon, Polygon, LineString, Coordinate};
 use neon::result::Throw;
+
 
 /*
  curl -X POST \
@@ -130,7 +132,7 @@ pub struct Isochrone {
 // }
 
 pub async fn run_queries(request: IsochroneRequest, client: &reqwest::Client, url: &String, token: &String, destinations: &[&Destination], transport_mode: &String) -> Result<Vec<Isochrone>, ORSError> {
-    println!("Running request...");
+    println!("Running request to {} with json {}", url, json!(request));
     let query_result = client
         .post(url)
         .header("Content-Type", "application/json; charset=utf-8")
@@ -186,38 +188,88 @@ pub async fn run_queries(request: IsochroneRequest, client: &reqwest::Client, ur
 }
 
 #[tokio::main]
-pub async fn query_ors(transport_mode: String, token: &String, destinations: &Vec<&Destination>) -> Result<Vec<Isochrone>, ORSError> {
-    // TODO: can only query in groups of 5, so need to make a new query for each set of 5...
-    let requests: Vec<(IsochroneRequest, &[&Destination])> = destinations.chunks(5).map(|destination_chunk| {
-        let mut locations = Vec::new();
-        let mut range = Vec::new();
-        for destination in destination_chunk {
-            let mut latlon = Vec::new();
-            latlon.push(destination.lon);
-            latlon.push(destination.lat);
-            locations.push(latlon);
-            range.push(destination.time.num_seconds() as f64);
-        }
-        return (IsochroneRequest {
-            locations: locations,
-            range: range
-        }, destination_chunk);
-    }).collect();
+pub async fn query_ors(use_ors: bool, transport_mode: String, token: &String, destinations: &Vec<&Destination>) -> Result<Vec<Isochrone>, ORSError> {
+    if (use_ors) {
+        // TODO: can only query in groups of 5, so need to make a new query for each set of 5...
+        let requests: Vec<(IsochroneRequest, &[&Destination])> = destinations.chunks(5).map(|destination_chunk| {
+            let mut locations = Vec::new();
+            let mut range = Vec::new();
+            for destination in destination_chunk {
+                let mut latlon = Vec::new();
+                latlon.push(destination.lon);
+                latlon.push(destination.lat);
+                locations.push(latlon);
+                range.push(destination.time.num_seconds() as f64);
+            }
+            return (IsochroneRequest {
+                locations: locations,
+                range: range
+            }, destination_chunk);
+        }).collect();
 
-    let num_requests = requests.len();
-    let client = reqwest::Client::new();
-    let url = "https://api.openrouteservice.org/v2/isochrones/".to_owned() + &transport_mode;
-    let features: Vec<Result<Vec<Isochrone>, ORSError>> = stream::iter(requests).map(|request| {
-        async {
-            return run_queries(request.0, &client, &url, &token, request.1, &transport_mode).await;
-        }
-    }).buffer_unordered(num_requests).collect().await;
+        let num_requests = requests.len();
+        let client = reqwest::Client::new();
+        let url = "https://api.openrouteservice.org/v2/isochrones/".to_owned() + &transport_mode;
+        let features: Vec<Result<Vec<Isochrone>, ORSError>> = stream::iter(requests).map(|request| {
+            async {
+                return run_queries(request.0, &client, &url, &token, request.1, &transport_mode).await;
+            }
+        }).buffer_unordered(num_requests).collect().await;
 
-    let features: Result<Vec<Vec<Isochrone>>, ORSError> = features.into_iter().collect();
-    match features {
-        Ok(features) => return Ok(features.into_iter().flatten().collect()),
-        Err(err) => return Err(err),
-    };
+        let features: Result<Vec<Vec<Isochrone>>, ORSError> = features.into_iter().collect();
+        match features {
+            Ok(features) => return Ok(features.into_iter().flatten().collect()),
+            Err(err) => return Err(err),
+        };
+    } else {
+        
+
+        use geo_types::Geometry;
+        use std::convert::TryInto;
+        use std::str::FromStr;
+        use std::convert::TryFrom;
+        use geojson::{quick_collection, GeoJson, Value};
+        use geo_types::GeometryCollection;
+        use geojson::FeatureCollection;
+
+        let mut res = Vec::new();
+        for destination in destinations {
+            let url = "http://localhost:8002/isochrone";
+            let request = json!({
+                "locations":[{"lat": destination.lat, "lon": destination.lon}],
+                "costing":"auto",
+                "contours":[{"time":destination.time.num_minutes()}]
+            });
+            println!("Running request to {} with json {}", url, json!(request));
+            let client = reqwest::Client::new();
+            let query_result = client
+                .post(url)
+                .header("Content-Type", "application/json; charset=utf-8")
+                .header("Accept", "application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8")
+                .header("Authorization", token)
+                .json(&request)
+                .send()
+                .await?;
+            let text = query_result.text().await?;
+            let geojson = text.parse::<GeoJson>().unwrap();
+            let mut collection: GeometryCollection<f64> = quick_collection(&geojson).unwrap();
+            let geometry: &Geometry<f64> = &collection[0];
+            let polygon = match geometry {
+                Geometry::LineString(line) => Polygon::new(line.clone(), vec![]),
+                _ => return Err(ORSError::new(format!("Can't match polygon in the struct: {:?}", geometry).as_str())),
+            };
+            // let feature_collection: FeatureCollection = FeatureCollection::try_from(geojson).unwrap();
+            // let geometry = feature_collection.features[0].geometry.ok_or_else(|| ORSError::new("Couldn't match geometry"))?.value;
+            // let polygon = match geometry {
+            //     Value::Polygon(p) => p,
+            //     _ => return Err(ORSError::new(format!("Can't match polygon in the struct: {:?}", geometry).as_str())),
+            // };
+            // let polygon: Polygon<f64> = Polygon::try_into(polygon);
+            let isochrone = Isochrone { id: destination.id.to_string(), mode: transport_mode.clone(),  polygon: polygon };
+            res.push(isochrone);
+        }
+        return Ok(res);
+    }
 }
 
 fn get_union(isochrones: &Vec<&Isochrone>) -> Result<Isochrone, ORSError> {
@@ -239,7 +291,7 @@ fn get_union(isochrones: &Vec<&Isochrone>) -> Result<Isochrone, ORSError> {
     return Ok(Isochrone { id: id, mode: "AllModes".to_string(), polygon: unionized_polygon });
 }
 
-fn get_destination_isochrones(isochrones: &Vec<Isochrone>) -> Vec<Isochrone> {
+fn get_destination_isochrones(isochrones: &Vec<Isochrone>) -> Result<Vec<Isochrone>, ORSError> {
     let mut found_isochrones: HashSet<String> = HashSet::new();
     let mut destination_isochrones = Vec::new();
     for isochrone in isochrones {
@@ -252,10 +304,10 @@ fn get_destination_isochrones(isochrones: &Vec<Isochrone>) -> Vec<Isochrone> {
 
         match get_union(&all_isochrones_with_id) {
             Ok(union) => destination_isochrones.push(union),
-            Err(err) => { println!("{}", err); panic!("Couldn't get union of isochrones") },
+            Err(err) => return Err(err),
         };
     }
-    return destination_isochrones;
+    return Ok(destination_isochrones);
 }
 
 fn get_isochrone_permutations<'a>(groups: &Vec<Group>,  isochrones: &'a Vec<Isochrone>) -> Vec<Vec<&'a Isochrone>> {
@@ -295,7 +347,7 @@ fn get_isochrone_permutations<'a>(groups: &Vec<Group>,  isochrones: &'a Vec<Isoc
             }
         }
     }
-    println!("\n\n{:?}\n\n", new_groups);
+    // println!("\n\n{:?}\n\n", new_groups);
     let multi_prod: Vec<Vec<&Isochrone>> = new_groups.into_iter().multi_cartesian_product().collect();
     return multi_prod;
 }
@@ -307,10 +359,12 @@ fn get_isochrone_permutations<'a>(groups: &Vec<Group>,  isochrones: &'a Vec<Isoc
 /// Then, from each destination isochrone, get all the isochrone permutations. From there, you want
 /// to create a union of each set of 
 pub fn get_isochrone_intersections(groups: &Vec<Group>,  isochrones: &Vec<Isochrone>) -> Result<MultiPolygon<f64>, ORSError> {
-    let destination_isochrones = get_destination_isochrones(&isochrones);
-    let all_isochrones = get_isochrone_permutations(groups, &destination_isochrones);
+    println!("[RUST] [get_isochrone_intersections] here 0.");
+    let destination_isochrones = get_destination_isochrones(&isochrones)?;
     println!("[RUST] [get_isochrone_intersections] here 1.");
-    println!("{:?}", all_isochrones);
+    let all_isochrones = get_isochrone_permutations(groups, &destination_isochrones);
+    println!("[RUST] [get_isochrone_intersections] here 2.");
+    // println!("{:?}", all_isochrones);
 
 
     if isochrones.len() < 1 {
@@ -325,7 +379,7 @@ pub fn get_isochrone_intersections(groups: &Vec<Group>,  isochrones: &Vec<Isochr
         return acc.union(&intersection)
     });
     println!("{:?}", multi_poly);
-    println!("[RUST] [get_isochrone_intersections] here 2.");
+    println!("[RUST] [get_isochrone_intersections] here 3.");
 
     return Ok(multi_poly);
 }

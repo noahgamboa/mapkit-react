@@ -112,7 +112,7 @@ class DestinationGroup extends Component {
 class DestinationView extends Component {
 
 	render() {
-        const {destinations, groups} = this.props
+        const {destinations, groups, updateDestination, deleteDestination, updateGroup, updateGroupName} = this.props
         if (Object.keys(destinations).length === 0) {
             return (null);
         }
@@ -123,11 +123,12 @@ class DestinationView extends Component {
                 return (<Destination 
                     key={destination.id} 
                     destination={destination}
-                    updateDestination={this.props.updateDestination}
-                    updateGroup={this.props.updateGroup}
+                    updateDestination={updateDestination}
+                    updateGroup={updateGroup}
+                    deleteDestination={deleteDestination}
                     groups={groups}/>)
             })
-            return (<DestinationGroup key={group.id} name={group.name} updateGroupName={this.props.updateGroupName} groupId={group.id}>
+            return (<DestinationGroup key={group.id} name={group.name} updateGroupName={updateGroupName} groupId={group.id}>
                         {destinationList}
                     </DestinationGroup>)
         })
@@ -137,9 +138,9 @@ class DestinationView extends Component {
                 return (<Destination 
                     key={destination.id} 
                     destination={destination}
-                    updateDestination={this.props.updateDestination}
-                    updateGroup={this.props.updateGroup}
-                    deleteDestination={this.props.deleteDestination}
+                    updateDestination={updateDestination}
+                    updateGroup={updateGroup}
+                    deleteDestination={deleteDestination}
                     groups={groups}/>)
         })
 		return (
