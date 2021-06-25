@@ -1,5 +1,5 @@
 const dotenv = require('dotenv');
-const openrouteservice = require("openrouteservice-js");
+// const openrouteservice = require("openrouteservice-js");
 const generateIsochrones = require("./isochrones/lib/index.js")
 
 
@@ -7,9 +7,9 @@ const {
     ORS_TOKEN,
 } = process.env;
 
-var Isochrones = new openrouteservice.Isochrones({
-  api_key: ORS_TOKEN
-});
+// var Isochrones = new openrouteservice.Isochrones({
+//   api_key: ORS_TOKEN
+// });
 
 const getProfile = (transportModes) => {
     const validTransportModes = Object.keys(transportModes).filter( mode => {
