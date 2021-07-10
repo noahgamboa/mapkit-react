@@ -4,74 +4,15 @@ extern crate geo_types;
 use futures::{stream, StreamExt}; // 0.3.5
 use itertools::Itertools;
 use std::collections::HashSet;
-use std::error::Error;
-use std::fmt;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 // use serde_json::{Value};
 // use serde_json::Value::Array;
 use crate::js_helpers::Destination;
 use crate::js_helpers::Group;
+use crate::isochrones::{ORSError, Isochrone};
 use geo_booleanop::boolean::BooleanOp;
 use geo_types::{MultiPolygon, Polygon, LineString, Coordinate};
-use neon::result::Throw;
-
-
-/*
- curl -X POST \
-  'https://api.openrouteservice.org/v2/isochrones/driving-car' \
-  -H 'Content-Type: application/json; charset=utf-8' \
-  -H 'Accept: application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8' \
-  -H 'Authorization: 5b3ce3597851110001cf6248fa5ae6eaac0140788a1c9155bda9f7dd' \
-  -d '{"locations":[[8.681495,49.41461],[8.686507,49.41943]],"range":[300,200]}'
-*/
-
-#[derive(Debug)]
-pub struct ORSError {
-    pub details: String
-}
-
-impl ORSError {
-    pub fn new(msg: &str) -> ORSError {
-        ORSError{details: msg.to_string()}
-    }
-}
-
-impl fmt::Display for ORSError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,"{}",self.details)
-    }
-}
-
-impl Error for ORSError {
-    fn description(&self) -> &str {
-        &self.details
-    }
-}
-
-impl From<reqwest::Error> for ORSError {
-    fn from(err: reqwest::Error) -> Self {
-        ORSError::new(&err.to_string())
-    }
-}
-
-impl From<ORSError> for String {
-    fn from(err: ORSError) -> Self {
-        return err.to_string();
-    }
-}
-
-impl From<Throw> for ORSError {
-    fn from(throw: Throw) -> Self {
-        ORSError::new(format!("JS Throw! {}", throw).as_str())
-    }
-}
-
-impl From<serde_json::Error> for ORSError {
-    fn from(err: serde_json::Error) -> Self {
-        ORSError::new(format!("serde_json error! {}", err).as_str())
-    }
-}
 
 #[derive(Serialize, Deserialize)]
 pub struct IsochroneRequest {
@@ -105,12 +46,15 @@ pub struct IsochroneResult {
     features: Vec<Feature>
 }
 
-#[derive(Debug)]
-pub struct Isochrone {
-    id: String,
-    mode: String,
-    polygon: Polygon<f64>
-}
+/*
+ curl -X POST \
+  'https://api.openrouteservice.org/v2/isochrones/driving-car' \
+  -H 'Content-Type: application/json; charset=utf-8' \
+  -H 'Accept: application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8' \
+  -H 'Authorization: 5b3ce3597851110001cf6248fa5ae6eaac0140788a1c9155bda9f7dd' \
+  -d '{"locations":[[8.681495,49.41461],[8.686507,49.41943]],"range":[300,200]}'
+*/
+
 
 // fn find_coordinates(coordinate: &Value) -> Result<Coordinate<f64>, ORSError> {
 //     let coordinate = match coordinate {
@@ -188,8 +132,7 @@ pub async fn run_queries(request: IsochroneRequest, client: &reqwest::Client, ur
 }
 
 #[tokio::main]
-pub async fn query_ors(use_ors: bool, transport_mode: String, token: &String, destinations: &Vec<&Destination>) -> Result<Vec<Isochrone>, ORSError> {
-    if (use_ors) {
+pub async fn query_ors(transport_mode: String, token: &String, destinations: &Vec<&Destination>) -> Result<Vec<Isochrone>, ORSError> {
         // TODO: can only query in groups of 5, so need to make a new query for each set of 5...
         let requests: Vec<(IsochroneRequest, &[&Destination])> = destinations.chunks(5).map(|destination_chunk| {
             let mut locations = Vec::new();
@@ -221,55 +164,6 @@ pub async fn query_ors(use_ors: bool, transport_mode: String, token: &String, de
             Ok(features) => return Ok(features.into_iter().flatten().collect()),
             Err(err) => return Err(err),
         };
-    } else {
-        
-
-        use geo_types::Geometry;
-        use std::convert::TryInto;
-        use std::str::FromStr;
-        use std::convert::TryFrom;
-        use geojson::{quick_collection, GeoJson, Value};
-        use geo_types::GeometryCollection;
-        use geojson::FeatureCollection;
-
-        let mut res = Vec::new();
-        for destination in destinations {
-            let url = "http://localhost:8002/isochrone";
-            let request = json!({
-                "locations":[{"lat": destination.lat, "lon": destination.lon}],
-                "costing":"auto",
-                "contours":[{"time":destination.time.num_minutes()}]
-            });
-            println!("Running request to {} with json {}", url, json!(request));
-            let client = reqwest::Client::new();
-            let query_result = client
-                .post(url)
-                .header("Content-Type", "application/json; charset=utf-8")
-                .header("Accept", "application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8")
-                .header("Authorization", token)
-                .json(&request)
-                .send()
-                .await?;
-            let text = query_result.text().await?;
-            let geojson = text.parse::<GeoJson>().unwrap();
-            let mut collection: GeometryCollection<f64> = quick_collection(&geojson).unwrap();
-            let geometry: &Geometry<f64> = &collection[0];
-            let polygon = match geometry {
-                Geometry::LineString(line) => Polygon::new(line.clone(), vec![]),
-                _ => return Err(ORSError::new(format!("Can't match polygon in the struct: {:?}", geometry).as_str())),
-            };
-            // let feature_collection: FeatureCollection = FeatureCollection::try_from(geojson).unwrap();
-            // let geometry = feature_collection.features[0].geometry.ok_or_else(|| ORSError::new("Couldn't match geometry"))?.value;
-            // let polygon = match geometry {
-            //     Value::Polygon(p) => p,
-            //     _ => return Err(ORSError::new(format!("Can't match polygon in the struct: {:?}", geometry).as_str())),
-            // };
-            // let polygon: Polygon<f64> = Polygon::try_into(polygon);
-            let isochrone = Isochrone { id: destination.id.to_string(), mode: transport_mode.clone(),  polygon: polygon };
-            res.push(isochrone);
-        }
-        return Ok(res);
-    }
 }
 
 fn get_union(isochrones: &Vec<&Isochrone>) -> Result<Isochrone, ORSError> {

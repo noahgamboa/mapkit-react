@@ -1,16 +1,16 @@
 {
   "name": "isochrones",
   "version": "0.1.0",
-  "description": "\"Generate Isochrones for a set of data\"",
+  "description": "",
   "main": "lib/index.js",
   "repository": {
     "type": "git",
-    "url": "."
+    "url": "none"
   },
   "author": "Noah Gamboa <noah@gamboafamily.com>",
   "license": "MIT",
   "dependencies": {
-    "neon-cli": "^0.7.1"
+    "neon-cli": "^0.8.0"
   },
   "scripts": {
     "install": "neon build"
