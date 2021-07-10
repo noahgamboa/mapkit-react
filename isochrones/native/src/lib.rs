@@ -8,7 +8,8 @@ use js_helpers::Group;
 use geojson::{Feature, GeoJson, Geometry};
 
 pub mod js_helpers;
-pub mod ors_helpers;
+// pub mod ors_helpers;
+pub mod valhalla_helpers;
 
 fn get_destinations_for_mode(transport_mode: String, destinations: &HashMap<String,Destination>) -> Vec<&Destination> {
     return destinations.keys().filter_map(|key|  {
@@ -35,13 +36,16 @@ impl Task for BackgroundTask {
     type Error = String;
     type JsEvent = JsString;
     fn perform(&self) -> Result<Self::Output, Self::Error> {
-        // let destination_isochrones = HashMap<String, Isochrone>::new();
-        let transport_modes: &'static [&'static str] = &["foot-walking", "driving-car", "cycling-regular"];
-        let mut query_results = Vec::new();
 
         println!("[RUST] destinations: {:?}", self.destinations);
         println!("[RUST] groups:       {:?}", self.groups);
         println!("[RUST] token:        {:?}", self.token);
+
+        let mut query_results = Vec::new();
+        if (using_ors) {
+
+        // let destination_isochrones = HashMap<String, Isochrone>::new();
+        let transport_modes: &'static [&'static str] = &["foot-walking", "driving-car", "cycling-regular"];
 
         // For each transport mode... 
         for transport_mode in transport_modes {
@@ -54,10 +58,13 @@ impl Task for BackgroundTask {
             }
 
             // make the query with each destination and accumulate them into the map
-            let query_result = ors_helpers::query_ors(false, transport_mode.to_string(), &self.token, &dests_in_mode)?;
+            let query_result = ors_helpers::query_ors(true, transport_mode.to_string(), &self.token, &dests_in_mode)?;
             query_results.extend(query_result);
         }
         // println!("[RUST] query_results =  {:?}", query_results);
+        } else {
+            let query_results = valhalla_helpers::query_valhalla(&dests_in_mode)?;
+        }
 
 
         println!("[RUST] here 0");

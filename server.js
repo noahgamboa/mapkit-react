@@ -40,27 +40,7 @@ app.get('/token', (req, res, next) => {
     res.send(jwt.sign(payload, AUTH_KEY, {header: header}));
 });
 
-app.post('/saveState', (req, res, next) => {
-    const json = req.body
-    if (!("userId" in json)) {
-        return res.status(400).json({message:"'userId' expected at top level of json"})
-    }
-    if (typeof(json.userId) !== "string") {
-        return res.status(400).json({message:"'userId' expected to be a string"})
-    }
-    if (!("data" in json)) {
-        return res.status(400).json({message:"'data' expected at top level of json"})
-    }
-    // const data = typeof(json.data) === "string" ? json.data : JSON.stringify(json.data)
-    if ("mapToken" in json.data) {
-        delete json.data.mapToken
-    }
-    console.log("Saving state!", json.data)
-    db.set(json.userId, json.data)
-    res.status(200).json({ result: "saved state for '" + json.userId + "'." });
-})
-
-app.post('/loadState', (req, res, next) => {
+app.post('/loadSearchCollections', (req, res, next) => {
     const json = req.body
     if (!("userId" in json)) {
         return res.status(400).json({message:"'userId' expected at top level of json"})
@@ -72,11 +52,62 @@ app.post('/loadState', (req, res, next) => {
         return res.status(400).json({message:"'userId' not in database"})
     }
     var result = db.get(json.userId)
-    if ("mapToken" in result) {
-        delete result.mapToken
+    if (!result.searchCollections) {
+        return res.status(400).json({message:"user does not have SearchCollections"})
     }
+    result = result.searchCollections
     console.log("Loading state!", result)
-    return res.status(200).json(db.get(json.userId))
+    return res.status(200).json(result)
+})
+
+app.post('/loadSearchCollection', (req, res, next) => {
+    const json = req.body
+    if (!("userId" in json)) {
+        return res.status(400).json({message:"'userId' expected at top level of json"})
+    }
+    if (typeof(json.userId) !== "string") {
+        return res.status(400).json({message:"'userId' expected to be a string"})
+    }
+    if (!db.has(json.userId)) {
+        return res.status(400).json({message:"'userId' not in database"})
+    }
+    var result = db.get(json.userId)
+    if (!result.searchCollections) {
+        return res.status(400).json({message:"user does not have SearchCollections"})
+    }
+    result = result.data[json.searchCollectionId]
+    console.log("Loading state!", result)
+    return res.status(200).json(result)
+})
+
+app.post('/saveSearchCollection', (req, res, next) => {
+    const json = req.body
+    if (!("userId" in json)) {
+        return res.status(400).json({message:"'userId' expected at top level of json"})
+    }
+    if (typeof(json.userId) !== "string") {
+        return res.status(400).json({message:"'userId' expected to be a string"})
+    }
+    if (!("data" in json)) {
+        return res.status(400).json({message:"'data' expected at top level of json"})
+    }
+    if ("mapToken" in json.data) {
+        delete json.data.mapToken
+    }
+    const searchCollections = json.data.searchCollections
+    if ("searchCollections" in json.data) {
+        delete json.data.searchCollections
+    }
+    const searchCollectionId = json.data.currentSearchCollection.id 
+    if ("currentSearchCollection" in json.data) {
+        delete json.data.currentSearchCollection
+    }
+    console.log("Saving state!", json.data)
+    var currentState = db.get(json.userId)
+    currentState.data[searchCollectionId] = json.data
+    currentState.searchCollections = searchCollections
+    db.set(json.userId, currentState)
+    res.status(200).json({ result: "saved state for '" + json.userId + "'." });
 })
 
 app.post('/generateIsochrone', (req, res, next) => {

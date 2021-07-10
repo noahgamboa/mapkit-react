@@ -5,7 +5,8 @@ import DestinationView from './Destination.js';
 import Cookies from 'universal-cookie';
 import update from 'immutability-helper';
 import {generateIsochrones} from './GenerateIsochrones.js';
-import {saver, loader} from './Saver.js';
+import {SearchCollection, SearchCollections} from './SearchCollection.js';
+import SearchCollectionsView from './SearchCollectionView.js';
 import { hash } from './utils.js'
 
 
@@ -181,6 +182,7 @@ class Groups {
     }
 }
 
+
 // save the current state of the application every 5 seconds but only if the component's state
 // updates. 
 window.noStateSaving = false
@@ -199,7 +201,9 @@ class App extends Component {
         boundingRegion: null,
         destinations: Destinations.create(),
         groups: Groups.create(),
-        isochrones: []
+        isochrones: [],
+        currentSearchCollection: null,
+        searchCollections: null,
     };
     mapkit = window.mapkit
 
@@ -214,6 +218,17 @@ class App extends Component {
 
     }
 
+    loadSearchCollections() {
+        SearchCollections.load("noah")
+            .then((searchCollections) => {
+                console.log("loading search collections", searchCollections)
+                this.setState({searchCollections: searchCollections})
+            })
+            .catch(error => {
+                console.error(error)
+            })
+    }
+
     componentDidMount() {
         // Get mapkit api
         if (!this.mapkit) {
@@ -225,14 +240,8 @@ class App extends Component {
         // Initialize our bounding region from cookie or use default
         this.setDefaultBoundingRegion()
 
-        loader("noah")
-            .then((newState) => {
-                console.log("Loading bounding region: ", newState.boundingRegion)
-                this.setState(newState)
-            })
-            .catch(error => {
-                console.error(error)
-            })
+        // load all our isochrones, places, destinations, and groups for our current search collection
+        this.loadSearchCollections()
         
         // get our Apple Maps token
         fetch('/token')
@@ -246,15 +255,23 @@ class App extends Component {
             });
     }
 
-    componentDidUpdate() {
-        if (window.shouldSaveState) {
-            window.noStateSaving = true
-            saver(this.state, "noah").then(() => {
-                window.shouldSaveState = false
-                window.noStateSaving = false
-            })
-
-        }
+    // componentDidUpdate() {
+    //     if (window.shouldSaveState) {
+    //         window.noStateSaving = true
+    //         SearchCollection.save(this.state, "noah").then(() => {
+    //             window.shouldSaveState = false
+    //             window.noStateSaving = false
+    //         })
+    //     }
+    // }
+    saveSearchCollection = () => {
+        SearchCollection.save(this.state, "noah").then((result) => {
+            console.log("Saved search collection!")
+            if (result.shouldUpdateState) {
+                console.log("Updating State after save!", result.searchCollectionState)
+                this.setState(result.searchCollectionState)
+            }
+        })
     }
 
     setPlacesCallback = (places) => {
@@ -335,6 +352,22 @@ class App extends Component {
             })
     }
 
+    setCurrentSearchCollection = (nextSearchCollectionId) => {
+        // make sure this ID is a valid ID in our search Collections
+        debugger
+        if (!SearchCollections.hasId(this.state.searchCollections, nextSearchCollectionId)) {
+            return 
+        }
+        SearchCollection.load("noah", nextSearchCollectionId)
+            .then((result) => {
+                this.setState({...result, currentSearchCollection: SearchCollections.get(this.state.searchCollections, nextSearchCollectionId)})
+            })
+            .catch((error) => {
+                console.log(error)
+            })
+
+    }
+
     render() {
         return (
             <div className="App">
@@ -360,6 +393,14 @@ class App extends Component {
                     updateGroup={this.updateDestinationGroup}
                     createGroup={this.createGroup}
                     updateGroupName={this.updateGroupName}
+                />
+                <SearchCollectionsView
+                    savedSearchCollection={this.state.currentSearchCollection}
+                    searchCollections={this.state.searchCollections}
+                    setCurrentSearchCollection={this.setCurrentSearchCollection}
+                    renameSearchCollection={this.renameSearchCollection}
+                    deleteSearchCollection={this.deleteSearchCollection}
+                    saveSearchCollection={this.saveSearchCollection}
                 />
             </div>
         );
