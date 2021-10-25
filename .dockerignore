@@ -1,0 +1,9 @@
+node_modules
+npm-debug.log
+
+isochrones/native/target
+isochrones/native/index.node
+isochrones/native/artifacts.json
+isochrones/**/*~
+isochrones/**/node_modules
+isochrones/**/.DS_Store

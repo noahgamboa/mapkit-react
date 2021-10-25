@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
 // var https = require('https');
 const JSONdb = require('simple-json-db');
-const { getIsochrones } = require('./isochrones.js')
+const generateIsochrones = require("./isochrones/lib/index.js")
 
 
 const db = new JSONdb('db/database.json');
@@ -16,6 +16,7 @@ const {
     MAPKIT_KEY_ID,
     TRAVEL_TIME_APPLICATION_ID,
     TRAVEL_TIME_API_KEY,
+    ORS_TOKEN,
     PORT,
 } = process.env;
 
@@ -109,6 +110,23 @@ app.post('/saveSearchCollection', (req, res, next) => {
     db.set(json.userId, currentState)
     res.status(200).json({ result: "saved state for '" + json.userId + "'." });
 })
+
+const getIsochrones = (destinations, groups) => {
+    var isochrones = []
+    return new Promise((resolve, reject) => {
+        var result = generateIsochrones(destinations, groups, ORS_TOKEN, (error, result) => {
+            console.log("[GENERATE ISOCHRONES] Callback")
+            console.log("Error Value = ", error)
+            console.log("Result Value = ", result)
+            if (error) {
+                reject(error)
+            } else {
+                console.log("Resolving...")
+                resolve(result)
+            }
+        })
+    })
+}
 
 app.post('/generateIsochrone', (req, res, next) => {
     const json = req.body

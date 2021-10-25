@@ -13,9 +13,7 @@
     "immutability-helper": "^3.1.1",
     "jsonwebtoken": "^8.5.1",
     "node-gyp": "^7.1.2",
-    "simple-json-db": "^1.2.2",
-    "styled-components": "^5.3.0",
-    "universal-cookie": "^4.0.4"
+    "simple-json-db": "^1.2.2"
   },
   "devDependencies": {
     "concurrently": "^4.0.1"
