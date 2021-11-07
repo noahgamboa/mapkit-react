@@ -1,0 +1,27 @@
+.DestinationViewWrapper {
+    position: absolute; 
+    top: 100px;
+    left: 10px;
+    z-index: 99;
+    width: 20rem;
+    background: #F2F1F9;
+    border: none;
+    padding: 0.5rem;
+}
+
+.DestinationList {
+    text-align: left;
+
+}
+
+.Destination {
+    text-align: left;
+}
+
+.DestinationModeSpan {
+    margin-right: 10px;
+}
+
+.DestinationGroup {
+    padding-left: 1.0rem;
+}

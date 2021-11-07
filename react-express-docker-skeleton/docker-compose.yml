@@ -1,0 +1,63 @@
+version: '3'
+services:
+  api_dev:
+    build:
+      context: ./api/
+    command: "nodemon --ignore 'db/' app.js"
+    volumes:
+      - ./api/:/usr/app
+      - /usr/app/node_modules
+    ports:
+      - "3001:3001"
+    env_file: ./api/.env 
+    environment:
+      NODE_ENV: development
+      CHOKIDAR_USEPOLLING: "true"
+
+  client_dev:
+    build:
+      context: ./client/
+    command: npm start
+    volumes:
+      - ./client/:/usr/app
+      - /usr/app/node_modules
+    depends_on:
+      - api_dev
+    ports:
+      - "3000:3000"
+    # env_file: ./client/.env # TODO - uncomment this to auto-load your .env file!
+
+  valhalla:
+    image: gisops/valhalla:latest
+    container_name: valhalla_latest
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+    ports:
+      - 8002:8002
+    build:
+      context: ./docker-valhalla
+      args:
+        - VALHALLA_RELEASE=3.1.4
+        - PRIMESERVER_RELEASE=3.1.4
+    volumes:
+      - ./custom_files/:/custom_files
+    environment:
+      # Auto-download PBFs from Geofabrik
+      #- tile_urls=https://download.geofabrik.de/europe/andorra-latest.osm.pbf https://download.geofabrik.de/europe/albania-latest.osm.pbf
+      # California
+      - tile_urls=https://download.geofabrik.de/north-america/us/california-latest.osm.pbf
+      # Get correct bounding box from e.g. https://boundingbox.klokantech.com/
+      # California
+      # -124.48,32.53,-114.13,42.01
+      - min_x=-124.48
+      - min_y=32.53
+      - max_x=-114.13
+      - max_y=42.01
+      - server_threads=2  # determines how many threads will be used to run valhalla
+      - use_tiles_ignore_pbf=True  # load existing valhalla_tiles.tar directly
+      - build_elevation=True  # build elevation with "True" or "Force", needs valid coordinates min_x, min_y etc
+      - build_admins=False  # build admins db with "True" or "Force"
+      - build_time_zones=False  # build timezone db with "True" or "Force"
+      - force_rebuild=False  # forces a rebuild of the routing tiles with "True"

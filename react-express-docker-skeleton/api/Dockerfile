@@ -1,0 +1,37 @@
+FROM node:16
+
+# Create app directory
+WORKDIR /usr/app
+
+# Install rust stuff
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y \
+    ca-certificates curl file \
+    build-essential \
+    autoconf automake autotools-dev libtool xutils-dev && \
+    rm -rf /var/lib/apt/lists/*
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+ENV PATH=/root/.cargo/bin:$PATH
+ENV USER root
+RUN npm install -g neon-cli
+
+# Install nodemon for hot reload
+RUN npm install -g nodemon
+
+# Install app dependencies
+# A wildcard is used to ensure both package.json AND package-lock.json are copied
+# where available (npm@5+)
+COPY package*.json ./
+
+RUN npm install
+# If you are building your code for production
+# RUN npm install --only=production
+
+# Copy app source to working folder
+COPY . .
+
+RUN cd isochrones && neon build
+
+EXPOSE 3001
+CMD [ "nodemon", "--ignore", "'db/'", "app.js" ]
+

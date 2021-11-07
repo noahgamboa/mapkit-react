@@ -1,0 +1,21 @@
+{
+  "name": "mapkit-react-api",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "nodemon --ignore 'db/' app.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.16.4",
+    "immutability-helper": "^3.1.1",
+    "jsonwebtoken": "^8.5.1",
+    "node-gyp": "^7.1.2",
+    "simple-json-db": "^1.2.2"
+  },
+  "devDependencies": {
+    "concurrently": "^4.0.1"
+  }
+}
