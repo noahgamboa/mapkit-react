@@ -1,0 +1,3 @@
+[submodule "docker-valhalla"]
+	path = react-express-docker-skeleton/docker-valhalla
+	url = https://github.com/gis-ops/docker-valhalla
