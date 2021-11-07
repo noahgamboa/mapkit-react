@@ -35,3 +35,13 @@ Then, startup the server:
 ```
 valhalla_service valhalla.json 1
 ```
+
+# Features to Add
+
+- ability to edit whole destinations as a group (set time & transit mode for an entire group)
+- when searching for places to add, an indicator showing no place was found
+- want to find places based on a vibe? not sure how to best quantify this, but I think you'd want to say like here are 3 places I like to go to, show me all the neighborhoods that are like the places that I like? maybe the app tracks you
+- when adding a destination, be able to add it directly to the group you want to add it to
+- improve saving of changes to the map, should really be saving on each change to the state. right now, if app crashes nothing is saved but should ideally be saving all the time.
+    - add a sql database? eh. nah. 
+
