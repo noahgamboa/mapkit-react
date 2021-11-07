@@ -28,7 +28,7 @@ fn not_using_transport_mode(transport_mode: &str, destination: &Destination) -> 
 }
 
 #[tokio::main]
-pub async fn query_valhalla(destinations: &Vec<&Destination>) -> Result<Vec<Isochrone>, ORSError> {
+pub async fn query_valhalla(destinations: &Vec<&Destination>, url: &String) -> Result<Vec<Isochrone>, ORSError> {
     let mut res = Vec::new();
     let transport_modes = vec!["bicycle", "auto", "pedestrian", "multimodal"];
     for destination in destinations {
@@ -36,7 +36,7 @@ pub async fn query_valhalla(destinations: &Vec<&Destination>) -> Result<Vec<Isoc
             if not_using_transport_mode(transport_mode, destination) {
                 continue;
             }
-            let url = "http://localhost:8002/isochrone";
+            // let url = "http://localhost:8002/isochrone";
             let request = json!({
                 "locations":[{"lat": destination.lat, "lon": destination.lon}],
                 "costing": transport_mode,

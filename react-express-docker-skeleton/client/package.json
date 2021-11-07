@@ -38,5 +38,5 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://api_dev:3001"
+  "proxy": "http://api_dev:5000"
 }

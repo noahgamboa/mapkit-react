@@ -64,7 +64,7 @@ impl Task for BackgroundTask {
             }
             // println!("[RUST] query_results =  {:?}", query_results);
         } else {
-            query_results = valhalla_helpers::query_valhalla(&self.destinations.values().collect())?;
+            query_results = valhalla_helpers::query_valhalla(&self.destinations.values().collect(), &self.token)?;
         }
 
 

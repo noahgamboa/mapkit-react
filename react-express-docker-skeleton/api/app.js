@@ -5,8 +5,6 @@ const bodyParser = require('body-parser');
 // var https = require('https');
 const JSONdb = require('simple-json-db');
 const generateIsochrones = require("./isochrones/lib/index.js")
-var cors = require('cors')
-
 
 const db = new JSONdb('db/database.json');
 
@@ -20,6 +18,7 @@ const {
     TRAVEL_TIME_API_KEY,
     ORS_TOKEN,
     PORT,
+    VALHALLA_URL
 } = process.env;
 
 const header = {
@@ -31,7 +30,7 @@ const header = {
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.get('/',  cors(), function (req, res) {
+app.get('/', function (req, res) {
   res.send('Hello World!')
 })
 
@@ -121,7 +120,7 @@ app.post('/saveSearchCollection', (req, res, next) => {
 const getIsochrones = (destinations, groups) => {
     var isochrones = []
     return new Promise((resolve, reject) => {
-        var result = generateIsochrones(destinations, groups, ORS_TOKEN, (error, result) => {
+        var result = generateIsochrones(destinations, groups, VALHALLA_URL, (error, result) => {
             console.log("[GENERATE ISOCHRONES] Callback")
             console.log("Error Value = ", error)
             console.log("Result Value = ", result)
@@ -159,6 +158,8 @@ app.listen(PORT, '0.0.0.0', (err) => {
         console.log(err);
         process.exit(1);
     }
+    var os = require("os");
+    console.log(`hostname = ${os.hostname()}\n`);
     console.log(`now running on port: ${PORT}\n`);
 });
 

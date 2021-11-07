@@ -32,6 +32,6 @@ COPY . .
 
 RUN cd isochrones && neon build
 
-EXPOSE 3001
+EXPOSE 5000
 CMD [ "nodemon", "--ignore", "'db/'", "app.js" ]
 
