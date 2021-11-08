@@ -1,0 +1,28 @@
+version: '3.0'
+services:
+  valhalla:
+    image: gisops/valhalla:latest
+    container_name: valhalla_latest
+    ports:
+      - 8002:8002
+    #build:
+    #  context: .
+    #  args:
+    #    - VALHALLA_RELEASE=master
+    #    - PRIMESERVER_RELEASE=master
+    volumes:
+      - ./custom_files/:/custom_files
+    environment:
+      # Auto-download PBFs from Geofabrik
+      #- tile_urls=https://download.geofabrik.de/europe/andorra-latest.osm.pbf https://download.geofabrik.de/europe/albania-latest.osm.pbf
+      # Get correct bounding box from e.g. https://boundingbox.klokantech.com/
+      #- min_x=18 # -> Albania | -180 -> World
+      #- min_y=38 # -> Albania | -90  -> World
+      #- max_x=22 # -> Albania |  180 -> World
+      #- max_y=43 # -> Albania |  90  -> World
+      - server_threads=2  # determines how many threads will be used to run valhalla
+      - use_tiles_ignore_pbf=True  # load existing valhalla_tiles.tar directly
+      - build_elevation=False  # build elevation with "True" or "Force", needs valid coordinates min_x, min_y etc
+      - build_admins=False  # build admins db with "True" or "Force"
+      - build_time_zones=False  # build timezone db with "True" or "Force"
+      - force_rebuild=False  # forces a rebuild of the routing tiles with "True"
