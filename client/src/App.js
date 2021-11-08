@@ -336,7 +336,13 @@ class App extends Component {
 
     deleteDestination = (destination) => {
         const newDestinations = Destinations.removeDestination(this.state.destinations, destination)
-        this.setState({destinations: newDestinations})
+        const oldGroupId      = destination.groupId
+        if (oldGroupId !== null) {
+            const newGroups   = Groups.removeDestination(this.state.groups, destination.id, destination.groupId)
+            this.setState({destinations: newDestinations, groups: newGroups })
+        } else {
+            this.setState({destinations: newDestinations})
+        }
     }
 
     generateIsochrones = () => {
