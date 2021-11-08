@@ -56,7 +56,7 @@ app.post('/loadSearchCollections', (req, res, next) => {
         return res.status(400).json({message:"'userId' expected to be a string"})
     }
     if (!db.has(json.userId)) {
-        return res.status(400).json({message:"'userId' not in database"})
+        return res.status(400).json({message:`'${json.userId}' not in database`})
     }
     var result = db.get(json.userId)
     if (!result.searchCollections) {
@@ -87,35 +87,35 @@ app.post('/loadSearchCollection', (req, res, next) => {
     return res.status(200).json(result)
 })
 
-app.post('/saveSearchCollection', (req, res, next) => {
-    const json = req.body
-    if (!("userId" in json)) {
-        return res.status(400).json({message:"'userId' expected at top level of json"})
-    }
-    if (typeof(json.userId) !== "string") {
-        return res.status(400).json({message:"'userId' expected to be a string"})
-    }
-    if (!("data" in json)) {
-        return res.status(400).json({message:"'data' expected at top level of json"})
-    }
-    if ("mapToken" in json.data) {
-        delete json.data.mapToken
-    }
-    const searchCollections = json.data.searchCollections
-    if ("searchCollections" in json.data) {
-        delete json.data.searchCollections
-    }
-    const searchCollectionId = json.data.currentSearchCollection.id 
-    if ("currentSearchCollection" in json.data) {
-        delete json.data.currentSearchCollection
-    }
-    console.log("Saving state!", json.data)
-    var currentState = db.get(json.userId)
-    currentState.data[searchCollectionId] = json.data
-    currentState.searchCollections = searchCollections
-    db.set(json.userId, currentState)
-    res.status(200).json({ result: "saved state for '" + json.userId + "'." });
-})
+// app.post('/saveSearchCollection', (req, res, next) => {
+//     const json = req.body
+//     if (!("userId" in json)) {
+//         return res.status(400).json({message:"'userId' expected at top level of json"})
+//     }
+//     if (typeof(json.userId) !== "string") {
+//         return res.status(400).json({message:"'userId' expected to be a string"})
+//     }
+//     if (!("data" in json)) {
+//         return res.status(400).json({message:"'data' expected at top level of json"})
+//     }
+//     if ("mapToken" in json.data) {
+//         delete json.data.mapToken
+//     }
+//     const searchCollections = json.data.searchCollections
+//     if ("searchCollections" in json.data) {
+//         delete json.data.searchCollections
+//     }
+//     const searchCollectionId = json.data.currentSearchCollection.id 
+//     if ("currentSearchCollection" in json.data) {
+//         delete json.data.currentSearchCollection
+//     }
+//     console.log("Saving state!", json.data)
+//     var currentState = db.get(json.userId)
+//     currentState.data[searchCollectionId] = json.data
+//     currentState.searchCollections = searchCollections
+//     db.set(json.userId, currentState)
+//     res.status(200).json({ result: "saved state for '" + json.userId + "'." });
+// })
 
 const getIsochrones = (destinations, groups) => {
     var isochrones = []

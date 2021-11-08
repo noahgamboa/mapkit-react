@@ -64,6 +64,7 @@ class AppleMap extends Component {
                     return
                 }
                 console.log("Initializing Bounding Region from Default Search: " + data.boundingRegion)
+                this.props.updateBoundingRegion(data.boundingRegion) 
             });
         } else {
             console.log("Initializing Bounding Region from props: " + this.props.boundingRegion)
@@ -134,7 +135,7 @@ class AppleMap extends Component {
             annotation.callout = landmarkAnnotationCallout
             return annotation
         })
-        this.map.showItems(annotations)
+        this.map.addItems(annotations)
         this.setState({placesAnnotations: annotations})
     }
 
@@ -165,7 +166,7 @@ class AppleMap extends Component {
             annotation.callout = landmarkAnnotationCallout
             return annotation
         })
-        this.map.showItems(annotations)
+        this.map.addItems(annotations)
         this.setState({destinationAnnotations: annotations})
     }
 
