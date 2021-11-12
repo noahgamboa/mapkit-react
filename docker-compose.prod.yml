@@ -1,6 +1,6 @@
 version: '3'
 services:
-  api:
+  api_dev:
     build:
       context: ./api/
     command: "node app.js"
