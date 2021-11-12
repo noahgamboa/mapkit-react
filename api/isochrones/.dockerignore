@@ -1,14 +1,3 @@
-native/target
-native/index.node
-native/artifacts.json
 **/*~
 **/node_modules
 **/.DS_Store
-
-isochrones/native/target
-isochrones/native/index.node
-isochrones/native/artifacts.json
-isochrones/**/*~
-isochrones/**/node_modules
-isochrones/**/.DS_Store
-

@@ -30,7 +30,7 @@ RUN npm install
 # Copy app source to working folder
 COPY . .
 
-RUN cd isochrones && neon build
+RUN cd isochrones && npm install
 
 EXPOSE 5000
 CMD [ "nodemon", "--ignore", "'db/'", "app.js" ]
