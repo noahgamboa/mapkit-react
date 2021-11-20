@@ -12,6 +12,12 @@ docker-compose up -d
 - when adding a destination, be able to add it directly to the group you want to add it to
 - improve saving of changes to the map, should really be saving on each change to the state. right now, if app crashes nothing is saved but should ideally be saving all the time.
     - add a sql database? eh. nah. 
+- if you click generate and it doesn't generate explain what to do to make it generate.
+    - if you click generate and there's no overlap, it should tell you there's no overlap
+    - if it's broken, tell them to contact me!
+- make it mobile-friendly
+    - possibly rework the UI entirely so that it's mobile first? 
+
 
 # react-express-docker-skeleton
 A skeleton React/Express/Docker app
