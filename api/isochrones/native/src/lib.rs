@@ -67,13 +67,8 @@ impl Task for BackgroundTask {
             query_results = valhalla_helpers::query_valhalla(&self.destinations.values().collect(), &self.token)?;
         }
 
-
-        println!("[RUST] here 0");
         let polygons = ors_helpers::get_isochrone_intersections(&self.groups, &query_results)?;
-        println!("[RUST] here 1");
-
         let geometry = Geometry::new(geojson::Value::from(&polygons));
-        println!("[RUST] here 2");
         let geojson = GeoJson::Feature(Feature {
             bbox: None,
             geometry: Some(geometry),
@@ -81,16 +76,13 @@ impl Task for BackgroundTask {
             properties: None,
             foreign_members: None,
         });
-        println!("[RUST] here 3");
 
         let geojson_string = geojson.to_string();
-
-        println!("[RUST] Completing query");
+        println!("[RUST] json result:  {:?}", geojson_string);
         Ok(geojson_string)
     }
 
     fn complete(self, mut cx: TaskContext, result: Result<Self::Output, Self::Error>) -> JsResult<Self::JsEvent> {
-        println!("[RUST] in complete function");
         let string = match result {
             Ok(value) => value,
             Err(error) => error

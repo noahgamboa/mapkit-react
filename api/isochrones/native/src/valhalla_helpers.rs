@@ -42,7 +42,7 @@ pub async fn query_valhalla(destinations: &Vec<&Destination>, url: &String) -> R
                 "costing": transport_mode,
                 "contours":[{"time":destination.time.num_minutes()}]
             });
-            println!("Running request to {} with json {}", url, json!(request));
+            println!("[RUST] Running request to {} with json {}", url, json!(request));
             let client = reqwest::Client::new();
             let query_result = client
                 .post(url)

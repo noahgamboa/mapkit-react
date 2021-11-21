@@ -1,6 +1,20 @@
 const generateIsochrones = require("./lib/index")
+// VALHALLA_URL="http://valhalla:8002/isochrone"
+VALHALLA_URL="http://localhost:8002/isochrone"
 
-const destinations =  {
+const getIsochrones = (destinations, groups) => {
+    var isochrones = []
+    return new Promise((resolve, reject) => {
+        var result = generateIsochrones(destinations, groups, VALHALLA_URL, (error, result) => {
+            console.log("[GENERATE ISOCHRONES] Callback")
+            console.log("Error Value = ", error)
+            console.log("Result Value = ", result)
+            resolve()
+        })
+    })
+}
+
+var destinations =  {
   '132083463926734': {
     name: 'Tartine Bakery',
     coordinate: { latitude: 37.76141071177564, longitude: -122.42411434650421 },
@@ -18,7 +32,7 @@ const destinations =  {
     transitTime: 30
   }
 }
-const groups = {
+var groups = {
   'kmd0vg6v-f529qbmxr': {
     id: 'kmd0vg6v-f529qbmxr',
     name: 'Test',
@@ -26,14 +40,59 @@ const groups = {
   }
 }
 
-
-const ORS_TOKEN="5b3ce3597851110001cf6248fa5ae6eaac0140788a1c9155bda9f7dd"
-const callback = function(result, error) {
-    console.log("Running callback!")
-    if (!error) {
-        console.log(result)
-    } else {
-        console.log(error)
-    }
-}
-generateIsochrones(destinations, groups, ORS_TOKEN, callback)
+getIsochrones(destinations, groups)
+    .then(() => {
+        destinations = {
+            '4258036681961592': {
+                name: 'Tartine Manufactory',
+                coordinate: { latitude: 37.761822081351966, longitude: -122.41182446479797 },
+                id: '4258036681961592',
+                groupId: null,
+                transportModes: { walk: true, bike: false, transit: false, drive: false },
+                transitTime: 30
+            },
+            '2037349799714366': {
+                name: 'Tartine Inner Sunset',
+                coordinate: { latitude: 37.765373, longitude: -122.466133 },
+                id: '2037349799714366',
+                groupId: null,
+                transportModes: { walk: true, bike: false, transit: false, drive: false },
+                transitTime: 30
+            }
+        }
+        groups = {}
+        return getIsochrones(destinations, groups)
+    })
+    .then(() => {
+        destinations = {}
+        groups = {}
+        return getIsochrones(destinations, groups)
+    })
+    .then(() => {
+        destinations = {
+            '4258036681961592': {
+                name: 'Tartine Manufactory',
+                coordinate: { latitude: 37.761822081351966, longitude: -122.41182446479797 },
+                id: '4258036681961592',
+                groupId: null,
+                transportModes: { walk: true, bike: false, transit: false, drive: false },
+                transitTime: 30
+            },
+            '2037349799714366': {
+                name: 'Tartine Inner Sunset',
+                coordinate: { latitude: 37.765373, longitude: -122.466133 },
+                id: '2037349799714366',
+                groupId: null,
+                transportModes: { walk: true, bike: false, transit: false, drive: false },
+                transitTime: 30
+            }
+        }
+        groups = {
+            'kmd0vg6v-f529qbmxr': {
+                id: 'kmd0vg6v-f529qbmxr',
+                name: 'Test',
+                destinationIds: { '123456789106734': true,  '1234567890961592': true }
+            }
+        }
+        return getIsochrones(destinations, groups)
+    })
