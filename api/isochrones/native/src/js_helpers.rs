@@ -103,6 +103,6 @@ pub fn get_groups(cx: &mut FunctionContext, groups_js: Handle<JsObject>) -> Opti
 }
 
 pub fn get_token(_cx: &mut FunctionContext, token_js: Handle<JsString>) -> Option<String> {
-            let token: String = token_js.downcast::<JsString>().unwrap().value();
-            return Some(token);
+    let token: String = token_js.downcast::<JsString>().unwrap().value();
+    return Some(token);
 }

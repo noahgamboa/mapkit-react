@@ -8,23 +8,9 @@ use js_helpers::Group;
 use geojson::{Feature, GeoJson, Geometry};
 
 pub mod js_helpers;
-pub mod ors_helpers;
+pub mod intersection;
 pub mod valhalla_helpers;
 pub mod isochrones;
-
-fn get_destinations_for_mode(transport_mode: String, destinations: &HashMap<String,Destination>) -> Vec<&Destination> {
-    return destinations.keys().filter_map(|key|  {
-        let destination = &destinations[key];
-        if transport_mode == "foot-walking" && destination.walk {
-            return Some(destination);
-        } else if transport_mode == "driving-car" && destination.drive {
-            return Some(destination);
-        } else if transport_mode == "cycling-regular" && destination.bike {
-            return Some(destination);
-        }
-        return None;
-    }).collect();
-}
 
 struct BackgroundTask {
     destinations: HashMap<String, Destination>,
@@ -42,32 +28,8 @@ impl Task for BackgroundTask {
         println!("[RUST] groups:       {:?}", self.groups);
         println!("[RUST] token:        {:?}", self.token);
 
-        let mut query_results = Vec::new();
-        let using_ors = false;
-        if using_ors {
-            // let destination_isochrones = HashMap<String, Isochrone>::new();
-            let transport_modes: &'static [&'static str] = &["foot-walking", "driving-car", "cycling-regular"];
-
-            // For each transport mode... 
-            for transport_mode in transport_modes {
-                // get all the destinations with that transport mode
-                let dests_in_mode = get_destinations_for_mode(transport_mode.to_string(), &self.destinations); 
-
-                // if we don't have any destinations to query, return.
-                if dests_in_mode.len() == 0 {
-                    continue;
-                }
-
-                // make the query with each destination and accumulate them into the map
-                let query_result = ors_helpers::query_ors(transport_mode.to_string(), &self.token, &dests_in_mode)?;
-                query_results.extend(query_result);
-            }
-            // println!("[RUST] query_results =  {:?}", query_results);
-        } else {
-            query_results = valhalla_helpers::query_valhalla(&self.destinations.values().collect(), &self.token)?;
-        }
-
-        let polygons = ors_helpers::get_isochrone_intersections(&self.groups, &query_results)?;
+        let query_results = valhalla_helpers::query_valhalla(&self.destinations.values().collect(), &self.token)?;
+        let polygons = intersection::get_isochrone_intersections(&self.groups, &query_results)?;
         let geometry = Geometry::new(geojson::Value::from(&polygons));
         let geojson = GeoJson::Feature(Feature {
             bbox: None,
@@ -76,7 +38,6 @@ impl Task for BackgroundTask {
             properties: None,
             foreign_members: None,
         });
-
         let geojson_string = geojson.to_string();
         println!("[RUST] json result:  {:?}", geojson_string);
         Ok(geojson_string)
