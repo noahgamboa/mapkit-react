@@ -351,6 +351,9 @@ class App extends Component {
             .then((result) => {
                 console.log("got isochrones!")
                 console.log(result)
+                if (result.length === 0) {
+                    alert("No isochrones were found, please try removing destinations or increasing travel time.")
+                }
                 this.setState({isochrones: result})
             }).catch((error) => {
                 console.log(error)
