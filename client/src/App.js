@@ -356,8 +356,8 @@ class App extends Component {
                 }
                 this.setState({isochrones: result})
             }).catch((error) => {
-                console.log(error)
-                console.log("error in app")
+                alert("Could not generate isochrones, received error: " + error)
+                console.log("Could not generate isochrones, received error: " + error)
             })
     }
 
