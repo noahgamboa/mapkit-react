@@ -1,0 +1,20 @@
+{
+  "staging": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-mapkitisochrone-staging-72133-authRole",
+      "UnauthRoleArn": "arn:aws:iam::717824114398:role/amplify-mapkitisochrone-staging-72133-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::717824114398:role/amplify-mapkitisochrone-staging-72133-authRole",
+      "Region": "us-west-2",
+      "DeploymentBucketName": "amplify-mapkitisochrone-staging-72133-deployment",
+      "UnauthRoleName": "amplify-mapkitisochrone-staging-72133-unauthRole",
+      "StackName": "amplify-mapkitisochrone-staging-72133",
+      "StackId": "arn:aws:cloudformation:us-west-2:717824114398:stack/amplify-mapkitisochrone-staging-72133/d27ca680-4b64-11ec-8ea7-06628643fa31",
+      "AmplifyAppId": "d1ygertst9880i"
+    },
+    "categories": {
+      "auth": {
+        "mapkitisochrone": {}
+      }
+    }
+  }
+}

@@ -1,0 +1,7 @@
+type SearchCollection @model @auth(rules: [{allow: owner}, {allow: groups, groups: ["Admin"], operations: [read, create, update, delete]}]) {
+  id: ID!
+  data: String
+  searchCollectionId: String
+  name: String
+}
+ 

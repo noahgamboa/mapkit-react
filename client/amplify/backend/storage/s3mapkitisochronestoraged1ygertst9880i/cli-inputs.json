@@ -1,0 +1,12 @@
+{
+  "resourceName": "s3mapkitisochronestoraged1ygertst9880i",
+  "bucketName": "mapkit-isochrone-storage-d1ygertst9880i",
+  "policyUUID": "38a67e08",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ]
+}

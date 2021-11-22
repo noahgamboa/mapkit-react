@@ -9,8 +9,16 @@ import {SearchCollection, SearchCollections} from './SearchCollection.js';
 import SearchCollectionsView from './SearchCollectionView.js';
 import { hash } from './utils.js'
 
+import { Amplify } from 'aws-amplify';
+
+import { Authenticator } from '@aws-amplify/ui-react';
+import '@aws-amplify/ui-react/styles.css';
+
+// import awsExports from '@environments/auth-with-username-no-attributes/src/aws-exports';
+import awsmobile from './aws-exports.js'
 
 import './App.css';
+Amplify.configure(awsmobile);
 
 const cookies = new Cookies();
 
@@ -379,39 +387,43 @@ class App extends Component {
 
     render() {
         return (
-            <div className="App">
-                <AppleMap
-                    token={this.state.mapToken}
-                    updateBoundingRegion={this.setBoundingRegion}
-                    boundingRegion={this.state.boundingRegion}
-                    places={this.state.places}
-                    destinations={this.state.destinations}
-                    addDestination={this.addDestination}
-                    isochrones={this.state.isochrones}
-                />
-                <SearchBar
-                    setPlacesCallback={this.setPlacesCallback}
-                    boundingRegion={this.state.boundingRegion}
-                    generateIsochrones={this.generateIsochrones}
-                />
-                <DestinationView
-                    destinations={this.state.destinations}
-                    groups={this.state.groups}
-                    updateDestination={this.updateDestination}
-                    deleteDestination={this.deleteDestination}
-                    updateGroup={this.updateDestinationGroup}
-                    createGroup={this.createGroup}
-                    updateGroupName={this.updateGroupName}
-                />
-                <SearchCollectionsView
-                    savedSearchCollection={this.state.currentSearchCollection}
-                    searchCollections={this.state.searchCollections}
-                    setCurrentSearchCollection={this.setCurrentSearchCollection}
-                    renameSearchCollection={this.renameSearchCollection}
-                    deleteSearchCollection={this.deleteSearchCollection}
-                    saveSearchCollection={this.saveSearchCollection}
-                />
-            </div>
+            <Authenticator>
+                {({ signOut, user }) => (
+                    <div className="App">
+                        <AppleMap
+                            token={this.state.mapToken}
+                            updateBoundingRegion={this.setBoundingRegion}
+                            boundingRegion={this.state.boundingRegion}
+                            places={this.state.places}
+                            destinations={this.state.destinations}
+                            addDestination={this.addDestination}
+                            isochrones={this.state.isochrones}
+                        />
+                        <SearchBar
+                            setPlacesCallback={this.setPlacesCallback}
+                            boundingRegion={this.state.boundingRegion}
+                            generateIsochrones={this.generateIsochrones}
+                        />
+                        <DestinationView
+                            destinations={this.state.destinations}
+                            groups={this.state.groups}
+                            updateDestination={this.updateDestination}
+                            deleteDestination={this.deleteDestination}
+                            updateGroup={this.updateDestinationGroup}
+                            createGroup={this.createGroup}
+                            updateGroupName={this.updateGroupName}
+                        />
+                        <SearchCollectionsView
+                            savedSearchCollection={this.state.currentSearchCollection}
+                            searchCollections={this.state.searchCollections}
+                            setCurrentSearchCollection={this.setCurrentSearchCollection}
+                            renameSearchCollection={this.renameSearchCollection}
+                            deleteSearchCollection={this.deleteSearchCollection}
+                            saveSearchCollection={this.saveSearchCollection}
+                        />
+                    </div>
+                )}
+            </Authenticator>
         );
     }
 }

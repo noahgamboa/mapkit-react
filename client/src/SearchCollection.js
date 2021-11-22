@@ -1,3 +1,5 @@
+import { DataStore } from '@aws-amplify/datastore';
+import SearchCollectionModel from './models';
 import update from 'immutability-helper';
 
 // Example POST method implementation:
@@ -24,7 +26,7 @@ export class SearchCollection {
         return "SearchCollection-" + Date.now().toString(36).substr(-8) + "-" + Math.random().toString(36).substr(2, 9); // guaranteed to be unique
     }
 
-    static create(name) {
+    static async create(name) {
         if (!(typeof(name) === "string")) {
             throw new Error("Group.create ERROR: name '" + name + "' is not an instance of a string")
         }
@@ -32,13 +34,17 @@ export class SearchCollection {
             throw new Error("SearchCollection.create ERROR: name must have a non-zero length")
         }
         const searchCollectionId = SearchCollection.generateSearchCollectionID()
-        return {
-            id: searchCollectionId,
-            name: name,
-        }
+        return await DataStore.save(
+            new SearchCollection({
+                "data": "{}",
+                "searchCollectionId": searchCollectionId,
+                "name": "Lorem ipsum dolor sit amet"
+            })
+        );
     }
 
     static isType(searchCollection) {
+        debugger
         return (
             searchCollection instanceof Object &&
             typeof(searchCollection.id) === "string" &&
@@ -49,40 +55,62 @@ export class SearchCollection {
 
     static async load(userId, searchCollectionId) {
         return new Promise( (resolve, reject) => {
-            postData("/loadSearchCollection", {
-                searchCollectionId: searchCollectionId,
-                userId: userId
-            }).then((result) => {
-                resolve(result)
-            }).catch((error) => {
-                console.error(error)
-                reject(error)
-            })
+            DataStore.query(SearchCollection, c => c.searchCollectionId("eq", searchCollectionId))
+                .then((result) => {
+                    console.log(result)
+                    resolve(result)
+                }).catch((error) => {
+                    console.error(error)
+                    reject(error)
+                })
         })
+        // return new Promise( (resolve, reject) => {
+        //     postData("/loadSearchCollection", {
+        //         searchCollectionId: searchCollectionId,
+        //         userId: userId
+        //     }).then((result) => {
+        //         resolve(result)
+        //     }).catch((error) => {
+        //         console.error(error)
+        //         reject(error)
+        //     })
+        // })
     }
 
-    static async save(searchCollectionState, userId) {
-        var shouldUpdateState = false
-        if (!SearchCollection.isType(searchCollectionState.currentSearchCollection)) {
-            const searchCollection = SearchCollection.create("New Collection")
-            searchCollectionState.currentSearchCollection = searchCollection
-            searchCollectionState.searchCollections = SearchCollections.setOrAddSearchCollection(searchCollectionState.searchCollections, searchCollection)
-            shouldUpdateState = true
-        }
+    static async save(searchCollection, name, data) {
         return new Promise( (resolve, reject) => {
-            postData("/saveSearchCollection", {
-                userId: userId,
-                data: searchCollectionState,
-            }).then((result) => {
+            DataStore.save(SearchCollection.copyOf(searchCollection, item => {
+                item.data = data
+                item.name = name
+            })).then((result) => {
                 console.log("saved!")
-                result.shouldUpdateState = shouldUpdateState
-                result.searchCollectionState = searchCollectionState
                 resolve(result)
             }).catch((error) => {
-                console.log("error!")
+                console.log("error in saving search collection!")
                 reject(error)
             })
         })
+        // var shouldUpdateState = false
+        // if (!SearchCollection.isType(searchCollectionState.currentSearchCollection)) {
+        //     const searchCollection = SearchCollection.create("New Collection")
+        //     searchCollectionState.currentSearchCollection = searchCollection
+        //     searchCollectionState.searchCollections = SearchCollections.setOrAddSearchCollection(searchCollectionState.searchCollections, searchCollection)
+        //     shouldUpdateState = true
+        // }
+        // return new Promise( (resolve, reject) => {
+        //     postData("/saveSearchCollection", {
+        //         userId: userId,
+        //         data: searchCollectionState,
+        //     }).then((result) => {
+        //         console.log("saved!")
+        //         result.shouldUpdateState = shouldUpdateState
+        //         result.searchCollectionState = searchCollectionState
+        //         resolve(result)
+        //     }).catch((error) => {
+        //         console.log("error!")
+        //         reject(error)
+        //     })
+        // })
     }
 }
 
