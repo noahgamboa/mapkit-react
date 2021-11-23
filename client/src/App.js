@@ -7,6 +7,7 @@ import update from 'immutability-helper';
 import {generateIsochrones} from './GenerateIsochrones.js';
 import {SearchCollections} from './SearchCollection.js';
 import SearchCollectionsView from './SearchCollectionView.js';
+import AccountMenu from './AccountMenu.js';
 import { hash } from './utils.js'
 
 import { Amplify } from 'aws-amplify';
@@ -397,16 +398,9 @@ class App extends Component {
                                         generateIsochrones={this.generateIsochrones}
                                     />
                                 </Grid>
-                                <Grid item xs={6}/>
-                                <Grid item xs={2}>
-                                    <SearchCollectionsView
-                                        currentSearchCollection={this.state.currentSearchCollection}
-                                        searchCollections={this.state.searchCollections}
-                                        setCurrentSearchCollection={this.setCurrentSearchCollection}
-                                        renameSearchCollection={this.renameSearchCollection}
-                                        deleteSearchCollection={this.deleteSearchCollection}
-                                        saveSearchCollection={this.saveSearchCollection}
-                                    />
+                                <Grid item xs={7}/>
+                                <Grid item xs={1}>
+                                    <AccountMenu/>
                                 </Grid>
                             </Grid>
                         </Toolbar>
