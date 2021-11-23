@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import styled from 'styled-components'
-import {SearchCollection, SearchCollections} from './SearchCollection.js';
+import {SearchCollections} from './SearchCollection.js';
 
 const SearchCollectionsViewWrapper = styled.div`
     position: absolute; 
@@ -23,10 +23,10 @@ const SearchCollectionItem = ({id, name, updateName, setCurrent}) => {
 class SearchCollectionsView extends Component {
 	render() {
         const { savedSearchCollection, searchCollections, setCurrentSearchCollection, renameSearchCollection, deleteSearchCollection, saveSearchCollection} = this.props
-        if (!SearchCollections.isType(searchCollections)) {
+        if (searchCollections === null) {
             return (<div></div>)
         }
-        const searchCollectionsList = Object.values(searchCollections.data).map((searchCollection) => {
+        const searchCollectionsList = Object.values(searchCollections).map((searchCollection) => {
             return (<SearchCollectionItem key={searchCollection.id} id={searchCollection.id} name={searchCollection.name} updateName={renameSearchCollection} setCurrent={setCurrentSearchCollection}/>)
         })
 		return (

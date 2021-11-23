@@ -1,27 +1,8 @@
 import { DataStore } from '@aws-amplify/datastore';
-import SearchCollectionModel from './models';
+import { SearchCollection } from './models';
 import update from 'immutability-helper';
 
-// Example POST method implementation:
-async function postData(url = '', data = {}) {
-  // Default options are marked with *
-  const response = await fetch(url, {
-    method: 'POST', // *GET, POST, PUT, DELETE, etc.
-    mode: 'cors', // no-cors, *cors, same-origin
-    cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-    credentials: 'same-origin', // include, *same-origin, omit
-    headers: {
-      'Content-Type': 'application/json'
-      // 'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    redirect: 'follow', // manual, *follow, error
-    referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-    body: JSON.stringify(data) // body data type must match "Content-Type" header
-  });
-  return response.json(); // parses JSON response into native JavaScript objects
-}
-
-export class SearchCollection {
+class SearchCollectionModel {
     static generateSearchCollectionID() {
         return "SearchCollection-" + Date.now().toString(36).substr(-8) + "-" + Math.random().toString(36).substr(2, 9); // guaranteed to be unique
     }
@@ -33,24 +14,25 @@ export class SearchCollection {
         if (name.length === 0) {
             throw new Error("SearchCollection.create ERROR: name must have a non-zero length")
         }
-        const searchCollectionId = SearchCollection.generateSearchCollectionID()
+        const searchCollectionId = SearchCollectionModel.generateSearchCollectionID()
         return await DataStore.save(
             new SearchCollection({
                 "data": "{}",
                 "searchCollectionId": searchCollectionId,
-                "name": "Lorem ipsum dolor sit amet"
+                "name": name
             })
         );
     }
 
     static isType(searchCollection) {
-        debugger
-        return (
-            searchCollection instanceof Object &&
-            typeof(searchCollection.id) === "string" &&
-            typeof(searchCollection.name) === "string" &&
-            searchCollection.id.slice(0, 16) === "SearchCollection"
-        )
+        return searchCollection instanceof SearchCollection
+        // debugger
+        // return (
+        //     searchCollection instanceof Object &&
+        //     typeof(searchCollection.id) === "string" &&
+        //     typeof(searchCollection.name) === "string" &&
+        //     searchCollection.id.slice(0, 16) === "SearchCollection"
+        // )
     }
 
     static async load(userId, searchCollectionId) {
@@ -64,17 +46,6 @@ export class SearchCollection {
                     reject(error)
                 })
         })
-        // return new Promise( (resolve, reject) => {
-        //     postData("/loadSearchCollection", {
-        //         searchCollectionId: searchCollectionId,
-        //         userId: userId
-        //     }).then((result) => {
-        //         resolve(result)
-        //     }).catch((error) => {
-        //         console.error(error)
-        //         reject(error)
-        //     })
-        // })
     }
 
     static async save(searchCollection, name, data) {
@@ -84,83 +55,36 @@ export class SearchCollection {
                 item.name = name
             })).then((result) => {
                 console.log("saved!")
+                debugger
                 resolve(result)
             }).catch((error) => {
                 console.log("error in saving search collection!")
                 reject(error)
             })
         })
-        // var shouldUpdateState = false
-        // if (!SearchCollection.isType(searchCollectionState.currentSearchCollection)) {
-        //     const searchCollection = SearchCollection.create("New Collection")
-        //     searchCollectionState.currentSearchCollection = searchCollection
-        //     searchCollectionState.searchCollections = SearchCollections.setOrAddSearchCollection(searchCollectionState.searchCollections, searchCollection)
-        //     shouldUpdateState = true
-        // }
-        // return new Promise( (resolve, reject) => {
-        //     postData("/saveSearchCollection", {
-        //         userId: userId,
-        //         data: searchCollectionState,
-        //     }).then((result) => {
-        //         console.log("saved!")
-        //         result.shouldUpdateState = shouldUpdateState
-        //         result.searchCollectionState = searchCollectionState
-        //         resolve(result)
-        //     }).catch((error) => {
-        //         console.log("error!")
-        //         reject(error)
-        //     })
-        // })
     }
 }
 
 export class SearchCollections {
-    static create() {
-        return {type: "SearchCollections", data: {}}
-    }
-
     static isType(searchCollections) {
-        return (
-            searchCollections instanceof Object &&
-            searchCollections.type === "SearchCollections"
-        )
+        // TODO: improve this type check
+        return searchCollections instanceof Array
     }
 
-    static setOrAddSearchCollection(searchCollectionGroup, searchCollection) {
-        if (!SearchCollection.isType(searchCollection)) {
-            throw new Error("SearchCollections.addSearchCollection ERROR: cannot add '" + searchCollection + "' because it is not a SearchCollection")
-        }
-        if (!SearchCollections.isType(searchCollectionGroup)) {
-            throw new Error("SearchCollections.addSearchCollection ERROR: cannot add to '" + searchCollectionGroup + "' because it is not a SearchCollectionGroup")
-        }
-        var searchCollectionUpdate = {data: {}}
-        searchCollectionUpdate["data"][searchCollection.id] = searchCollection
-        const newSearchCollectionGroup = update(searchCollectionGroup, { $merge: searchCollectionUpdate })
-        return newSearchCollectionGroup
-    }
-
-    static removeSearchCollection(searchCollectionGroup, searchCollection) {
-        if (!SearchCollections.isType(searchCollectionGroup)) {
-            throw new Error("SearchCollections.removeSearchCollection ERROR: cannot remove from '" + searchCollectionGroup + "' because it is not a SearchCollectionGroup")
-        }
-        if (!SearchCollection.isType(searchCollection)) {
-            throw new Error("SearchCollections.removeSearchCollection ERROR: cannot remove '" + searchCollection + "' because it is not a SearchCollection")
-        }
-        if (!(searchCollection.id in searchCollectionGroup)) {
-            throw new Error("SearchCollections.removeSearchCollection ERROR: cannot remove '" + searchCollection + "' because it is not in the SearchCollectionGroup")
-        }
-        const newSearchCollectionGroup = update(searchCollectionGroup, { $unset: [searchCollection.id] })
-        return newSearchCollectionGroup
-    }
-
-    static hasId(searchCollectionsGroup, id) {
-        if (!SearchCollections.isType(searchCollectionsGroup)) {
+    static hasId(searchCollections, id) {
+        if (!SearchCollections.isType(searchCollections)) {
             throw new Error("SearchCollections.hasId ERROR: searchCollections is not type SearchCollections")
         }
         if (typeof(id) !== "string") {
             return false
         }
-        return (id in searchCollectionsGroup.data)
+        // TODO: improve this search
+        for (var searchCollection of SearchCollections) {
+            if (searchCollection.id === id) {
+                return true
+            }
+        }
+        return false
     }
 
     static get(searchCollections, id) {
@@ -170,18 +94,45 @@ export class SearchCollections {
         if (typeof(id) !== "string") {
             throw new Error("SearchCollections.get ERROR: id is not in searchCollections")
         }
-        if (!(id in searchCollections.data)) {
-            throw new Error("SearchCollections.get ERROR: id is not in searchCollections")
+        for (var searchCollection in searchCollections) {
+            if (searchCollection.id === id) {
+                return searchCollection
+            }
         }
-        return searchCollections.data[id]
+        throw new Error("SearchCollections.get ERROR: id is not in searchCollections")
     }
 
-    static async load(userId) {
+    static getSearchCollectionData(searchCollections, searchCollectionId) {
+        console.log("here", searchCollectionId)
+        for (var searchCollection of searchCollections) {
+            console.log("here1", searchCollection.id)
+            if (searchCollectionId == searchCollection.id) {
+                return JSON.parse(searchCollection.data)
+            }
+        }
+        return {}
+    }
+
+    static async loadAllSearchCollections() {
+        return await DataStore.query(SearchCollection)
+    }
+
+    static async load() {
         return new Promise( (resolve, reject) => {
-            postData("/loadSearchCollections", {
-                userId: userId
-            }).then((result) => {
-                resolve(result)
+            SearchCollections.loadAllSearchCollections().then((result) => {
+                console.log(result);
+                if (result.length === 0) {
+                    SearchCollectionModel.create("New Collection").then((result) => {
+                        return result
+                    }).then((result) => {
+                        return SearchCollections.loadAllSearchCollections()
+                    }).then((result) => {
+                        console.log("Added new collection, result now is", result)
+                        resolve(result)
+                    })
+                } else {
+                    resolve(result)
+                }
             }).catch((error) => {
                 console.error(error)
                 reject(error)
@@ -189,12 +140,28 @@ export class SearchCollections {
         })
     }
 
-    static isEmpty(searchCollectionGroup) {
-        if (!SearchCollections.isType(searchCollectionGroup)) {
-            throw new Error("SearchCollections.isEmpty ERROR: '" + searchCollectionGroup + "' is not a SearchCollectionGroup")
+    static async saveSearchCollectionFromState(state) {
+        const searchCollection = state.currentSearchCollection
+        if (searchCollection instanceof SearchCollection) {
+            console.log("searchCollection is instance of SearchCollection")
+        } else {
+            console.log("searchCollection is not instance of SearchCollection")
         }
-        const hasKeys = !!Object.keys(searchCollectionGroup).length;
-        return !hasKeys
+        const name = state.currentSearchCollection.name
+        const data = JSON.stringify({
+            boundingRegion: state.boundingRegion,
+            groups: state.groups,
+            destinations: state.destinations
+        })
+        return new Promise( (resolve, reject) => {
+            SearchCollectionModel.save(searchCollection, name, data)
+                .then((result) => {
+                    resolve(result)
+                }).catch((error) => {
+                    reject(error)
+                })
+        })
     }
+
 
 }

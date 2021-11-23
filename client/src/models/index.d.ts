@@ -11,6 +11,8 @@ type SearchCollectionMetaData = {
 export declare class SearchCollection {
   readonly id: string;
   readonly data?: string;
+  readonly searchCollectionId?: string;
+  readonly name?: string;
   readonly createdAt?: string;
   readonly updatedAt?: string;
   constructor(init: ModelInit<SearchCollection, SearchCollectionMetaData>);

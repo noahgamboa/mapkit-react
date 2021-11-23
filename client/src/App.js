@@ -5,7 +5,7 @@ import DestinationView from './Destination.js';
 import Cookies from 'universal-cookie';
 import update from 'immutability-helper';
 import {generateIsochrones} from './GenerateIsochrones.js';
-import {SearchCollection, SearchCollections} from './SearchCollection.js';
+import {SearchCollections} from './SearchCollection.js';
 import SearchCollectionsView from './SearchCollectionView.js';
 import { hash } from './utils.js'
 
@@ -227,13 +227,14 @@ class App extends Component {
     }
 
     loadSearchCollections() {
-        SearchCollections.load("noah")
+        SearchCollections.load()
             .then((searchCollections) => {
-                console.log("loading search collections", searchCollections)
-                this.setState({searchCollections: searchCollections})
+                const currentSearchCollection = searchCollections[0]
+                const data = SearchCollections.getSearchCollectionData(searchCollections, currentSearchCollection.id)
+                this.setState({...data, searchCollections: searchCollections, currentSearchCollection: currentSearchCollection})
             })
             .catch(error => {
-                console.error(error)
+                console.error("Could not load search collections", error)
             })
     }
 
@@ -263,23 +264,14 @@ class App extends Component {
             });
     }
 
-    // componentDidUpdate() {
-    //     if (window.shouldSaveState) {
-    //         window.noStateSaving = true
-    //         SearchCollection.save(this.state, "noah").then(() => {
-    //             window.shouldSaveState = false
-    //             window.noStateSaving = false
-    //         })
-    //     }
-    // }
     saveSearchCollection = () => {
-        SearchCollection.save(this.state, "noah").then((result) => {
-            console.log("Saved search collection!")
-            if (result.shouldUpdateState) {
-                console.log("Updating State after save!", result.searchCollectionState)
-                this.setState(result.searchCollectionState)
-            }
-        })
+        const currentSearchCollectionId = this.state.currentSearchCollection.id
+        SearchCollections.saveSearchCollectionFromState(this.state)
+            .then(SearchCollections.load)
+            .then((result) => {
+                console.log("updating state after saved search", result)
+                this.setState({searchCollections: result, currentSearchCollection: SearchCollections.get(result, currentSearchCollectionId) })
+            })
     }
 
     setPlacesCallback = (places) => {
@@ -371,18 +363,11 @@ class App extends Component {
 
     setCurrentSearchCollection = (nextSearchCollectionId) => {
         // make sure this ID is a valid ID in our search Collections
-        debugger
         if (!SearchCollections.hasId(this.state.searchCollections, nextSearchCollectionId)) {
             return 
         }
-        SearchCollection.load("noah", nextSearchCollectionId)
-            .then((result) => {
-                this.setState({...result, currentSearchCollection: SearchCollections.get(this.state.searchCollections, nextSearchCollectionId)})
-            })
-            .catch((error) => {
-                console.log(error)
-            })
-
+        const result = SearchCollections.getSearchCollectionData(this.state.searchCollections, nextSearchCollectionId)
+        this.setState({...result, currentSearchCollection: SearchCollections.get(this.state.searchCollections, nextSearchCollectionId)})
     }
 
     render() {
