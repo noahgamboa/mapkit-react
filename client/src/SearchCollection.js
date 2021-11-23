@@ -79,7 +79,7 @@ export class SearchCollections {
             return false
         }
         // TODO: improve this search
-        for (var searchCollection of SearchCollections) {
+        for (var searchCollection of searchCollections) {
             if (searchCollection.id === id) {
                 return true
             }
@@ -94,7 +94,7 @@ export class SearchCollections {
         if (typeof(id) !== "string") {
             throw new Error("SearchCollections.get ERROR: id is not in searchCollections")
         }
-        for (var searchCollection in searchCollections) {
+        for (var searchCollection of searchCollections) {
             if (searchCollection.id === id) {
                 return searchCollection
             }
@@ -103,9 +103,7 @@ export class SearchCollections {
     }
 
     static getSearchCollectionData(searchCollections, searchCollectionId) {
-        console.log("here", searchCollectionId)
         for (var searchCollection of searchCollections) {
-            console.log("here1", searchCollection.id)
             if (searchCollectionId == searchCollection.id) {
                 return JSON.parse(searchCollection.data)
             }

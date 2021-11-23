@@ -4,6 +4,9 @@
   "private": true,
   "dependencies": {
     "@aws-amplify/ui-react": "^2.0.0",
+    "@emotion/react": "^11.6.0",
+    "@emotion/styled": "^11.6.0",
+    "@mui/material": "^5.1.1",
     "@testing-library/jest-dom": "^5.11.9",
     "@testing-library/react": "^11.2.3",
     "@testing-library/user-event": "^12.6.0",

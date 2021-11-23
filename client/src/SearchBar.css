@@ -1,32 +1,32 @@
-.SearchBarWrapper {
-    position: absolute; 
-    top: 10px;
-    left: 10px;
-    z-index: 99;
-}
+/* .SearchBarWrapper { */
+/*     position: absolute; */ 
+/*     top: 10px; */
+/*     left: 10px; */
+/*     z-index: 99; */
+/* } */
 
-.SearchBar {
-    width: 20rem;
-    background: #F2F1F9;
-    border: none;
-    padding: 0.5rem;
-}
+/* .SearchBar { */
+/*     width: 20rem; */
+/*     background: #F2F1F9; */
+/*     border: none; */
+/*     padding: 0.5rem; */
+/* } */
 
-.SetSearchRegionButton {
-    border-radius: 4px;
-    background: #F2F1F9;
-    border: none;
-    padding: 0.65rem;
-    margin-left: 0.5rem;
-}
+/* .SetSearchRegionButton { */
+/*     border-radius: 4px; */
+/*     background: #F2F1F9; */
+/*     border: none; */
+/*     padding: 0.65rem; */
+/*     margin-left: 0.5rem; */
+/* } */
 
-.RunButton {
-    border-radius: 4px;
-    background: #F2F1F9;
-    border: none;
-    padding: 0.65rem;
-    margin-left: 0.5rem;
-}
+/* .RunButton { */
+/*     border-radius: 4px; */
+/*     background: #F2F1F9; */
+/*     border: none; */
+/*     padding: 0.65rem; */
+/*     margin-left: 0.5rem; */
+/* } */
 
 input:disabled {
     color: #F2F1F9;

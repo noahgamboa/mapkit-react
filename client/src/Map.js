@@ -37,7 +37,7 @@ class AppleMap extends Component {
 			}
 		})
 
-		this.map = new this.mapkit.Map('map')
+        this.map = new this.mapkit.Map('map', { showsMapTypeControl: false })
 
         this.map.addEventListener("region-change-end", (event) => { 
             // if boundingRegion update is the same a props, then don't call update

@@ -14,10 +14,23 @@ import { Amplify } from 'aws-amplify';
 import { Authenticator } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
 
+
 // import awsExports from '@environments/auth-with-username-no-attributes/src/aws-exports';
 import awsmobile from './aws-exports.js'
 
 import './App.css';
+
+import { styled } from '@mui/material/styles';
+import AppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
+import Stack from '@mui/material/Stack';
+
+
 Amplify.configure(awsmobile);
 
 const cookies = new Cookies();
@@ -211,7 +224,7 @@ class App extends Component {
         groups: Groups.create(),
         isochrones: [],
         currentSearchCollection: null,
-        searchCollections: null,
+        searchCollections: [],
     };
     mapkit = window.mapkit
 
@@ -375,20 +388,28 @@ class App extends Component {
             <Authenticator>
                 {({ signOut, user }) => (
                     <div className="App">
-                        <AppleMap
-                            token={this.state.mapToken}
-                            updateBoundingRegion={this.setBoundingRegion}
-                            boundingRegion={this.state.boundingRegion}
-                            places={this.state.places}
-                            destinations={this.state.destinations}
-                            addDestination={this.addDestination}
-                            isochrones={this.state.isochrones}
-                        />
-                        <SearchBar
-                            setPlacesCallback={this.setPlacesCallback}
-                            boundingRegion={this.state.boundingRegion}
-                            generateIsochrones={this.generateIsochrones}
-                        />
+                        <Toolbar sx={{ marginTop: 2, background: 'transparent', position: 'absolute', zIndex: '99', width: "100%"}}>
+                            <Grid container spacing={2}>
+                                <Grid item xs={4}>
+                                    <SearchBar
+                                        setPlacesCallback={this.setPlacesCallback}
+                                        boundingRegion={this.state.boundingRegion}
+                                        generateIsochrones={this.generateIsochrones}
+                                    />
+                                </Grid>
+                                <Grid item xs={6}/>
+                                <Grid item xs={2}>
+                                    <SearchCollectionsView
+                                        currentSearchCollection={this.state.currentSearchCollection}
+                                        searchCollections={this.state.searchCollections}
+                                        setCurrentSearchCollection={this.setCurrentSearchCollection}
+                                        renameSearchCollection={this.renameSearchCollection}
+                                        deleteSearchCollection={this.deleteSearchCollection}
+                                        saveSearchCollection={this.saveSearchCollection}
+                                    />
+                                </Grid>
+                            </Grid>
+                        </Toolbar>
                         <DestinationView
                             destinations={this.state.destinations}
                             groups={this.state.groups}
@@ -398,13 +419,14 @@ class App extends Component {
                             createGroup={this.createGroup}
                             updateGroupName={this.updateGroupName}
                         />
-                        <SearchCollectionsView
-                            savedSearchCollection={this.state.currentSearchCollection}
-                            searchCollections={this.state.searchCollections}
-                            setCurrentSearchCollection={this.setCurrentSearchCollection}
-                            renameSearchCollection={this.renameSearchCollection}
-                            deleteSearchCollection={this.deleteSearchCollection}
-                            saveSearchCollection={this.saveSearchCollection}
+                        <AppleMap
+                            token={this.state.mapToken}
+                            updateBoundingRegion={this.setBoundingRegion}
+                            boundingRegion={this.state.boundingRegion}
+                            places={this.state.places}
+                            destinations={this.state.destinations}
+                            addDestination={this.addDestination}
+                            isochrones={this.state.isochrones}
                         />
                     </div>
                 )}
