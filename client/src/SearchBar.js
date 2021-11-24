@@ -19,7 +19,7 @@ const Search = styled('paper')(({ theme }) => ({
   [theme.breakpoints.up('sm')]: {
     marginLeft: theme.spacing(0),
     width: 'auto',
-  },
+  }
 }));
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({

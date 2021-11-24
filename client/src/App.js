@@ -391,14 +391,13 @@ class App extends Component {
                     <div className="App">
                         <Toolbar sx={{ marginTop: 2, background: 'transparent', position: 'absolute', zIndex: '99', width: "100%"}}>
                             <Grid container spacing={2}>
-                                <Grid item xs={4}>
+                                <Grid item xs={11}>
                                     <SearchBar
                                         setPlacesCallback={this.setPlacesCallback}
                                         boundingRegion={this.state.boundingRegion}
                                         generateIsochrones={this.generateIsochrones}
                                     />
                                 </Grid>
-                                <Grid item xs={7}/>
                                 <Grid item xs={1}>
                                     <AccountMenu/>
                                 </Grid>

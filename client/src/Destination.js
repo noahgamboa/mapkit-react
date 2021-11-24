@@ -1,5 +1,20 @@
 import React, { Component } from 'react'
 import './Destination.css';
+import Paper from '@mui/material/Paper';
+import ListSubheader from '@mui/material/ListSubheader';
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Collapse from '@mui/material/Collapse';
+import InboxIcon from '@mui/icons-material/MoveToInbox';
+import DraftsIcon from '@mui/icons-material/Drafts';
+import SendIcon from '@mui/icons-material/Send';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import StarBorder from '@mui/icons-material/StarBorder';
+
+
 
 const DestinationGroupSelector = ({groups, destination, updateGroup}) => {
     var groupChoices = Object.values(groups).map((g) => {
@@ -63,25 +78,44 @@ class Destination extends Component {
         })
 
 
+            // {/* <div className="Destination"> */}
+            // {/*     <button onClick={this.toggleModal}>{ destination.name }</button> */}
+            // {/*     { this.state.modalExposed === true ? */} 
+            // {/*             (<div className="DestinationModal"> */} 
+            // {/*                 <button onClick={() => { deleteDestination(destination) }}>Delete</button> */}
+            // {/*                 <DestinationGroupSelector groups={groups} destination={destination} updateGroup={updateGroup}/> */}
+            // {/*                 <div className="DestinationTime"> */} 
+            // {/*                 <input type="number" min="0" max="100" onChange={(e) => { */}
+            // {/*                     var obj = {}; */}
+            // {/*                     obj.transitTime = Number(e.target.value) */}
+            // {/*                     localUpdateDestination(obj) */}
+            // {/*                 }} value={destination.transitTime}/> */}
+            // {/*                     <span>min</span> */}
+            // {/*                 </div> */}
+            // {/*                 <div className="TransportModeList">{ transportModes }</div> */}
+            // {/*             </div>) : (null) */} 
+            // {/*     } */}
+            // {/* </div> */}
         return (
-            <div className="Destination">
-                <button onClick={this.toggleModal}>{ destination.name }</button>
-                { this.state.modalExposed === true ? 
-                        (<div className="DestinationModal"> 
-                            <button onClick={() => { deleteDestination(destination) }}>Delete</button>
-                            <DestinationGroupSelector groups={groups} destination={destination} updateGroup={updateGroup}/>
-                            <div className="DestinationTime"> 
-                            <input type="number" min="0" max="100" onChange={(e) => {
-                                var obj = {};
-                                obj.transitTime = Number(e.target.value)
-                                localUpdateDestination(obj)
-                            }} value={destination.transitTime}/>
-                                <span>min</span>
-                            </div>
-                            <div className="TransportModeList">{ transportModes }</div>
-                        </div>) : (null) 
-                }
-            </div>
+            <>
+                <ListItemButton onClick={this.toggleModal}>
+                    <ListItemIcon>
+                        <SendIcon />
+                    </ListItemIcon>
+                    <ListItemText primary={destination.name} />
+                    {this.state.modalExposed ? <ExpandLess /> : <ExpandMore />}
+                </ListItemButton>
+                <Collapse in={this.state.modalExposed} timeout="auto" unmountOnExit>
+                    <List component="div" disablePadding>
+                        <ListItemButton sx={{ pl: 4 }}>
+                            <ListItemIcon>
+                                <StarBorder />
+                            </ListItemIcon>
+                            <ListItemText primary="Starred" />
+                        </ListItemButton>
+                    </List>
+                </Collapse>
+            </>
         );
     }
 }
@@ -144,14 +178,35 @@ class DestinationView extends Component {
                     groups={groups}/>)
         })
 		return (
-            <div className="DestinationViewWrapper">
-                <h2>Destination List</h2>
+            <Paper elevation={3} sx={{position: 'absolute', zIndex:99, marginLeft: 3, marginTop: 10.5, width: '32.5ch'}}>
                 <button onClick={this.props.createGroup}>Create Group</button>
-                <ul className="DestinationList">
+                <List
+                    dense={true}
+                    sx={{ width: '100%', maxWidth: 360, bgcolor: 'background.paper' }}
+                    component="nav"
+                    aria-labelledby="nested-list-subheader"
+                    subheader={
+                        <ListSubheader component="div" id="nested-list-subheader">
+                            Destination List
+                        </ListSubheader>
+                    }
+                >
+                    <ListItemButton>
+                        <ListItemIcon>
+                            <SendIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Sent mail" />
+                    </ListItemButton>
+                    <ListItemButton>
+                        <ListItemIcon>
+                            <DraftsIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Drafts" />
+                    </ListItemButton>
                     { destinationGroupList }
                     { soloDestinations }
-                </ul>
-            </div>
+                </List>
+            </Paper>
         );
 	}
 }
