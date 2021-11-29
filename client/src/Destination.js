@@ -78,26 +78,26 @@ class Destination extends Component {
         })
 
 
-            // {/* <div className="Destination"> */}
-            // {/*     <button onClick={this.toggleModal}>{ destination.name }</button> */}
-            // {/*     { this.state.modalExposed === true ? */} 
-            // {/*             (<div className="DestinationModal"> */} 
-            // {/*                 <button onClick={() => { deleteDestination(destination) }}>Delete</button> */}
-            // {/*                 <DestinationGroupSelector groups={groups} destination={destination} updateGroup={updateGroup}/> */}
-            // {/*                 <div className="DestinationTime"> */} 
-            // {/*                 <input type="number" min="0" max="100" onChange={(e) => { */}
-            // {/*                     var obj = {}; */}
-            // {/*                     obj.transitTime = Number(e.target.value) */}
-            // {/*                     localUpdateDestination(obj) */}
-            // {/*                 }} value={destination.transitTime}/> */}
-            // {/*                     <span>min</span> */}
-            // {/*                 </div> */}
-            // {/*                 <div className="TransportModeList">{ transportModes }</div> */}
-            // {/*             </div>) : (null) */} 
-            // {/*     } */}
-            // {/* </div> */}
         return (
             <>
+                {/* <div className="Destination"> */}
+                {/*     <button onClick={this.toggleModal}>{ destination.name }</button> */}
+                {/*     { this.state.modalExposed === true ? */} 
+                {/*             (<div className="DestinationModal"> */} 
+                {/*                 <button onClick={() => { deleteDestination(destination) }}>Delete</button> */}
+                {/*                 <DestinationGroupSelector groups={groups} destination={destination} updateGroup={updateGroup}/> */}
+                {/*                 <div className="DestinationTime"> */} 
+                {/*                 <input type="number" min="0" max="100" onChange={(e) => { */}
+                {/*                     var obj = {}; */}
+                {/*                     obj.transitTime = Number(e.target.value) */}
+                {/*                     localUpdateDestination(obj) */}
+                {/*                 }} value={destination.transitTime}/> */}
+                {/*                     <span>min</span> */}
+                {/*                 </div> */}
+                {/*                 <div className="TransportModeList">{ transportModes }</div> */}
+                {/*             </div>) : (null) */} 
+                {/*     } */}
+                {/* </div> */}
                 <ListItemButton onClick={this.toggleModal}>
                     <ListItemIcon>
                         <SendIcon />
@@ -106,14 +106,19 @@ class Destination extends Component {
                     {this.state.modalExposed ? <ExpandLess /> : <ExpandMore />}
                 </ListItemButton>
                 <Collapse in={this.state.modalExposed} timeout="auto" unmountOnExit>
-                    <List component="div" disablePadding>
-                        <ListItemButton sx={{ pl: 4 }}>
-                            <ListItemIcon>
-                                <StarBorder />
-                            </ListItemIcon>
-                            <ListItemText primary="Starred" />
-                        </ListItemButton>
-                    </List>
+                    <div className="DestinationModal"> 
+                        <button onClick={() => { deleteDestination(destination) }}>Delete</button>
+                        <DestinationGroupSelector groups={groups} destination={destination} updateGroup={updateGroup}/>
+                        <div className="DestinationTime"> 
+                            <input type="number" min="0" max="100" onChange={(e) => {
+                                var obj = {};
+                                obj.transitTime = Number(e.target.value)
+                                localUpdateDestination(obj)
+                            }} value={destination.transitTime}/>
+                                <span>min</span>
+                            </div>
+                            <div className="TransportModeList">{ transportModes }</div>
+                        </div> 
                 </Collapse>
             </>
         );
